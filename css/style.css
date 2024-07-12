@@ -22,6 +22,16 @@ button {
 
 }
 
+.btn {
+    padding: 0.3rem 0.5rem;
+    background-color: var(--mainBgColor);
+    color: white;
+    border: 2px solid transparent;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 16px;
+
+}
 
 .main {
     background-color: var(--mainBgColor);
@@ -54,14 +64,8 @@ form {
         text-align: center;
     }
 
-    .btn {
-        padding: 0.3rem 0.5rem;
-        background-color: var(--mainBgColor);
-        color: white;
-        border: 2px solid transparent;
-        border-radius: 3px;
-        cursor: pointer;
-        font-size: 16px;
+    .search-btn {
+
         transition-duration: .2s;
         transition-property: background-color, color, border-color;
 
@@ -70,4 +74,33 @@ form {
             color: black;
         }
     }
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    >.btn {
+        position: relative;
+        padding: 0.4rem;
+
+        &:after {
+            content: "";
+            height: 2px;
+            position: absolute;
+            left: 0px;
+            right: 0px;
+            background-color: white;
+            top: calc(100% - 0.4rem);
+
+        }
+    }
+
+    span {
+        font-size: 20px;
+    }
+}
+
+.hide {
+    display: none;
 }

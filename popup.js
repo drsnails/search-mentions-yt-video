@@ -3,6 +3,10 @@
 var gElSearchBtn
 var gElForm
 var gElSearchInput
+var gPageIdx = 0
+var gElPrevBtn
+var gElNextBtn
+var gElPageResult
 
 window.addEventListener('DOMContentLoaded', () => {
     onInit()
@@ -13,15 +17,20 @@ function onInit() {
     gElForm = document.querySelector('form')
     gElSearchBtn = document.querySelector('.search-btn')
     gElSearchInput = document.querySelector('.search-input')
+    gElPrevBtn = document.querySelector('.prev-btn')
+    gElNextBtn = document.querySelector('.next-btn')
+    gElPageResult = document.querySelector('.page-result')
+    const searchTerm = loadFromStorage('searchTerm')
+    gElSearchInput.value = searchTerm || ''
     addEventListeners()
-
-    // chrome.runtime.onMessage.addListener(({ type, isRunningScroll }) => {
-    //     if (type === 'queue') {
-    //         onToggleImgLoader()
-    //     } else if (type === 'scroll') {
-    //         changeStopBtnTxt(isRunningScroll)
-    //     }
-    // })
+    chrome.runtime.onMessage.addListener(({ type, pageIdx }) => {
+        if (type === 'search') {
+            showPagination()
+        } else if (type === 'setPageIdx') {
+            gPageIdx = pageIdx
+            gElPageResult.innerText = gPageIdx + 1
+        }
+    })
 
 }
 
@@ -35,7 +44,7 @@ async function onSearch(ev) {
             funcName: 'getTranscriptTimestamps',
             searchTerm
         })
-       
+
     } catch (error) {
         console.log('error:', error)
 
@@ -43,6 +52,17 @@ async function onSearch(ev) {
         saveToStorage('searchTerm', searchTerm)
     }
 }
+
+async function onChangePageIdx(diff) {
+    gPageIdx += diff
+    let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+    executeContentScript(tab, {
+        funcName: 'onChangePageIdx',
+        pageIdx: gPageIdx,
+        searchTerm: gElSearchInput.value
+    })
+}
+
 
 async function executeContentScript(tab, argsObj = {}) {
     await chrome.scripting.executeScript({
@@ -55,7 +75,11 @@ async function executeContentScript(tab, argsObj = {}) {
 
 function addEventListeners() {
     gElForm.addEventListener('submit', onSearch)
+    gElPrevBtn.addEventListener('click', () => onChangePageIdx(-1))
+    gElNextBtn.addEventListener('click', () => onChangePageIdx(1))
 }
+
+
 
 
 function saveToStorage(key, data) {
@@ -67,3 +91,24 @@ function loadFromStorage(key) {
     return JSON.parse(data)
 }
 
+
+function showPagination() {
+    showElement('.pagination')
+    hideElement('.search-input-container')
+}
+
+function showSearchInput() {
+    showElement('.search-input-container')
+    hideElement('.pagination')
+}
+
+
+function showElement(selector) {
+    const el = document.querySelector(selector)
+    el.classList.remove('hide')
+}
+
+function hideElement(selector) {
+    const el = document.querySelector(selector)
+    el.classList.add('hide')
+}

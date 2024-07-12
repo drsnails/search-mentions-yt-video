@@ -8,17 +8,25 @@
 	</head>
 
 	<body>
-        <section class="main">
-            <form >
-                <section class="inputs-container">
-                    <input class="search-input" type="search" placeholder="Search something" />
-                </section>
-                <section class="btns-container">
-                    <button type="submit" class="btn search-btn">Search</button>
-                </section>
-            </form>
-        </section>
-
+		<section class="main">
+			<form>
+				<section class="search-input-container">
+					<input
+						class="search-input"
+						type="search"
+						placeholder="Search something"
+					/>
+				</section>
+				<section class="pagination hide">
+					<button type="button" class="btn prev-btn">Prev</button>
+					<span class="page-result">1</span>
+					<button type="button" class="btn next-btn">Next</button>
+				</section>
+				<section class="btns-container">
+					<button type="submit" class="btn search-btn">Search</button>
+				</section>
+			</form>
+		</section>
 
 		<script src="main.js"></script>
 		<script src="popup.js"></script>
