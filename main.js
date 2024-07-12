@@ -29,7 +29,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
         async function handleMatchIdxSelection(pageIdx = 0) {
 
             setMatchedScriptsSegs(_searchTerm)
-            if (!matchedElScriptSegs.length) return
+            if (!matchedElScriptSegs.length) return console.log('No matches found')
             if (pageIdx < 0) pageIdx = matchedElScriptSegs.length - 1
             if (pageIdx >= matchedElScriptSegs.length) pageIdx = 0
             matchIdx = pageIdx

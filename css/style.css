@@ -5,13 +5,14 @@
 :root {
     --gapSize: 7px;
     --borderRadius: 3px;
-
     --mainBgColor: #1c1c1c;
 }
 
 html {
     font-size: 30px;
 }
+
+
 
 body {
     margin: 0;
@@ -42,13 +43,13 @@ button {
     justify-content: center;
     height: max-content;
     width: 270px;
-    aspect-ratio: 1;
+    /* aspect-ratio: 1; */
+    height: 200px;
     font-size: 2em;
 }
 
 form {
-    height: 70vh;
-    aspect-ratio: 1;
+    /* height: 70vh; */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -63,7 +64,8 @@ form {
         text-align: center;
     }
 
-    .search-btn {
+    .search-btn,
+    .back-btn {
 
         transition-duration: .2s;
         transition-property: background-color, color, border-color;
@@ -77,26 +79,42 @@ form {
 
 .pagination {
     display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    >.btn {
-        position: relative;
-        padding: 0.4rem;
+    flex-direction: column;
+    .pagination-btns {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
 
-        &:after {
-            content: "";
-            height: 2px;
-            position: absolute;
-            left: 0px;
-            right: 0px;
-            background-color: white;
-            top: calc(100% - 0.4rem);
+        >.btn {
+            position: relative;
+            padding: 0.4rem;
 
+            &::after {
+                content: "";
+                height: 2px;
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: 0.3rem;
+                background-color: white;
+                transform-origin: right;
+                transform: scaleX(0);
+                transition: transform 0.15s ease-in-out;
+            }
+
+            &:hover::after {
+                transform-origin: left;
+                transform: scaleX(1);
+            }
+        }
+
+        span {
+            font-size: 20px;
         }
     }
-
-    span {
-        font-size: 20px;
+    span.term-title {
+        font-size: 13px;
+        text-align: center;
     }
 }
 

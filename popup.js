@@ -6,6 +6,7 @@ var gElSearchInput
 var gPageIdx = 0
 var gElPrevBtn
 var gElNextBtn
+var gElBackBtn
 var gElPageResult
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -19,6 +20,7 @@ function onInit() {
     gElSearchInput = document.querySelector('.search-input')
     gElPrevBtn = document.querySelector('.prev-btn')
     gElNextBtn = document.querySelector('.next-btn')
+    gElBackBtn = document.querySelector('.back-btn')
     gElPageResult = document.querySelector('.page-result')
     const searchTerm = loadFromStorage('searchTerm')
     gElSearchInput.value = searchTerm || ''
@@ -32,12 +34,14 @@ function onInit() {
         }
     })
 
+
 }
 
 
 async function onSearch(ev) {
     ev.preventDefault()
-    const searchTerm = gElSearchInput.value
+    const searchTerm = gElSearchInput.value.trim()
+    document.querySelector('.term-title span').innerText = searchTerm
     try {
         let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
         executeContentScript(tab, {
@@ -48,9 +52,7 @@ async function onSearch(ev) {
     } catch (error) {
         console.log('error:', error)
 
-    } finally {
-        saveToStorage('searchTerm', searchTerm)
-    }
+    } 
 }
 
 async function onChangePageIdx(diff) {
@@ -64,6 +66,8 @@ async function onChangePageIdx(diff) {
 }
 
 
+
+
 async function executeContentScript(tab, argsObj = {}) {
     await chrome.scripting.executeScript({
         target: { tabId: tab.id },
@@ -72,11 +76,18 @@ async function executeContentScript(tab, argsObj = {}) {
     });
 }
 
+const onInputSearch = debounce((ev) => {
+    const searchTerm = ev.target.value.trim()
+    saveToStorage('searchTerm', searchTerm)
+}, 700)
 
 function addEventListeners() {
     gElForm.addEventListener('submit', onSearch)
     gElPrevBtn.addEventListener('click', () => onChangePageIdx(-1))
     gElNextBtn.addEventListener('click', () => onChangePageIdx(1))
+    gElBackBtn.addEventListener('click', showSearchInput)
+
+    gElSearchInput.addEventListener('input', onInputSearch)
 }
 
 
@@ -95,11 +106,15 @@ function loadFromStorage(key) {
 function showPagination() {
     showElement('.pagination')
     hideElement('.search-input-container')
+    showElement('.back-btn')
+    hideElement('.search-btn')
 }
 
 function showSearchInput() {
     showElement('.search-input-container')
     hideElement('.pagination')
+    showElement('.search-btn')
+    hideElement('.back-btn')
 }
 
 
@@ -111,4 +126,17 @@ function showElement(selector) {
 function hideElement(selector) {
     const el = document.querySelector(selector)
     el.classList.add('hide')
+}
+
+
+function debounce(func, wait) {
+    let timeout
+    return (...args) => {
+        const later = () => {
+            timeout = null
+            func.call(this, ...args)
+        }
+        clearTimeout(timeout)
+        timeout = setTimeout(later, wait)
+    }
 }
