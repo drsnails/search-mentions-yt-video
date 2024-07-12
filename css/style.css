@@ -41,14 +41,13 @@ button {
     align-items: center;
     justify-content: center;
     height: max-content;
-    width: 330px;
-    height: 330px;
+    width: 270px;
+    aspect-ratio: 1;
     font-size: 2em;
 }
 
-
 form {
-    height: 50vh;
+    height: 70vh;
     aspect-ratio: 1;
     display: flex;
     flex-direction: column;
