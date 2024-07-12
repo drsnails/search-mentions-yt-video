@@ -35,13 +35,7 @@ async function onSearch(ev) {
             funcName: 'getTranscriptTimestamps',
             searchTerm
         })
-        // await chrome.scripting.executeScript({
-        //     target: { tabId: tab.id },
-        //     function: getTranscriptTimestamps,
-        //     args: [{
-        //         term: searchTerm
-        //     }]
-        // })
+       
     } catch (error) {
         console.log('error:', error)
 

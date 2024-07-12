@@ -1,12 +1,13 @@
 'use strict'
 
 
-console.clear()
 
 
 
 
 function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm }) {
+    console.clear();
+
     (function () {
 
         function sleep(time = 0) {
@@ -55,7 +56,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm }) {
         }
 
 
-        
+
         const mainFunctions = {
             getTranscriptTimestamps
         }
