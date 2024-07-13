@@ -61,7 +61,7 @@ async function onChangePageIdx(diff) {
     executeContentScript(tab, {
         funcName: 'onChangePageIdx',
         pageIdx: gPageIdx,
-        searchTerm: gElSearchInput.value
+        searchTerm: gElSearchInput.value.trim()
     })
 }
 
