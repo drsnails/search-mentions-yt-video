@@ -29,7 +29,7 @@ button {
     border: 2px solid white;
     border-radius: 3px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 17px;
 
 }
 
@@ -61,12 +61,11 @@ form {
         --extendTime: 0.2s;
         display: inline-block;
         position: relative;
-        transform: translateX(var(--clearBtnSize));
         transition: var(--extendTime) transform;
 
         .search-input {
             padding: 0.3rem;
-            padding-right: calc(var(--clearBtnSize) * 1.8);
+            padding-inline: var(--clearBtnSize) 0;
             border: none;
             border-radius: 3px;
             width: 100%;
@@ -75,9 +74,15 @@ form {
             background-color: transparent;
             color: white;
             position: relative;
+            transition: var(--extendTime) padding-inline;
 
             &:focus {
                 outline: none;
+            }
+
+            &:not(:placeholder-shown) {
+                padding-inline: 0.3rem calc(var(--clearBtnSize) * 1.8);
+
             }
 
             &::-webkit-search-cancel-button {
@@ -103,19 +108,13 @@ form {
             height: 2px;
             position: absolute;
             left: 0;
-            right: calc(var(--clearBtnSize) * 2);
+            right: 0;
             top: 105%;
             background-color: white;
-            transition: var(--extendTime) right;
         }
 
         &:has(input:not(:placeholder-shown)) {
             transform: translateX(0);
-
-            &::after {
-                right: 0;
-            }
-
         }
 
     }
@@ -174,7 +173,7 @@ form {
     }
 
     span.term-title {
-        font-size: 13px;
+        font-size: 14px;
         text-align: center;
     }
 }
