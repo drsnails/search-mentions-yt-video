@@ -67,7 +67,6 @@ async function onChangePageIdx(diff) {
 
 
 
-
 async function executeContentScript(tab, argsObj = {}) {
     await chrome.scripting.executeScript({
         target: { tabId: tab.id },
