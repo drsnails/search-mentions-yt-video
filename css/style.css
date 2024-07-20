@@ -187,8 +187,7 @@ form {
     .transcript-time {
         display: flex;
         justify-content: center;
-        gap: 0.1rem;
-
+        gap: 0.23rem;
     }
 }
 

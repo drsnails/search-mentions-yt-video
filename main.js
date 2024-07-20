@@ -29,7 +29,6 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
         }
 
         async function handleMatchIdxSelection(pageIdx = 0) {
-
             setMatchedScriptsSegs(_searchTerm)
             if (!matchedElScriptSegs.length) return console.log('No matches found')
             if (pageIdx < 0) pageIdx = matchedElScriptSegs.length - 1
@@ -52,6 +51,10 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
             let intervalId
             intervalId = setTimeout(() => {
                 setMatchedScriptsSegs(_searchTerm);
+                if (!matchedElScriptSegs.length) {
+                    chrome.runtime.sendMessage({ type: 'no-matches' })
+                    return console.log('No matches found')
+                }
                 handleMatchIdxSelection()
                 const elTimeDuration = document.querySelector('.ytp-time-display .ytp-time-duration')
                 chrome.runtime.sendMessage({ type: 'search', totalTime: elTimeDuration.innerText })

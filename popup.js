@@ -30,6 +30,7 @@ function onInit() {
     gElSearchInput.value = searchTerm || ''
     addEventListeners()
     chrome.runtime.onMessage.addListener(({ type, pageIdx, segTime, totalTime }) => {
+        console.log('type:', type)
         if (type === 'search') {
             showPagination()
             gElTotalTime.innerText = totalTime
@@ -37,6 +38,8 @@ function onInit() {
             gPageIdx = pageIdx
             gElPageResult.innerText = gPageIdx + 1
             gElCurrentTime.innerText = segTime
+        } else if (type === 'no-matches') {
+            console.log('No matches found')
         }
     })
 
@@ -58,7 +61,7 @@ async function onSearch(ev) {
     } catch (error) {
         console.log('error:', error)
 
-    } 
+    }
 }
 
 async function onChangePageIdx(diff) {
