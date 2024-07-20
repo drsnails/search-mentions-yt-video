@@ -1,12 +1,14 @@
 'use strict'
 
+// const TRANSCRIPT_TIME_SELECTOR = '#segments-container > ytd-transcript-segment-renderer:nth-child(36) div.segment-timestamp'
 function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageIdx: _pageIdx }) {
     const _argsObj = {
         _funcName,
         _searchTerm,
         _pageIdx
     };
-
+    
+    const TRANSCRIPTS_SEGS_SELECTOR = '#segments-container > ytd-transcript-segment-renderer > div';
     (function () {
 
         var matchedElScriptSegs;
@@ -17,11 +19,11 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
         }
 
         function setMatchedScriptsSegs(_searchTerm) {
-            let elTranScriptsSegs = [...document.querySelectorAll('#segments-container > ytd-transcript-segment-renderer > div')];
+            let elTranScriptsSegs = [...document.querySelectorAll(TRANSCRIPTS_SEGS_SELECTOR)];
             matchedElScriptSegs = elTranScriptsSegs.filter(elScriptSeg => {
                 const scriptSegText = elScriptSeg.querySelector('.segment-text').innerText;
                 const regex = new RegExp(_searchTerm, 'i');
-                return regex.test(scriptSegText);
+                return regex.test(scriptSegText)
             });
             return matchedElScriptSegs;
         }
@@ -37,7 +39,9 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
             await sleep()
             const elMatch = matchedElScriptSegs[matchIdx]
             elMatch.click()
-            chrome.runtime.sendMessage({ type: 'setPageIdx', pageIdx })
+            const segTime = elMatch.querySelector('div.segment-timestamp').innerText
+            
+            chrome.runtime.sendMessage({ type: 'setPageIdx', pageIdx, segTime })
         }
 
         function getTranscriptTimestamps({ _searchTerm }) {
@@ -49,8 +53,9 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
             intervalId = setTimeout(() => {
                 setMatchedScriptsSegs(_searchTerm);
                 handleMatchIdxSelection()
-                chrome.runtime.sendMessage({ type: 'search' })
-                clearInterval(intervalId)
+                const elTimeDuration = document.querySelector('.ytp-time-display .ytp-time-duration')
+                chrome.runtime.sendMessage({ type: 'search', totalTime: elTimeDuration.innerText })
+                clearTimeout(intervalId)
             }, 1000)
 
         }

@@ -8,6 +8,8 @@ var gElPrevBtn
 var gElNextBtn
 var gElBackBtn
 var gElPageResult
+var gElCurrentTime
+var gElTotalTime
 
 window.addEventListener('DOMContentLoaded', () => {
     onInit()
@@ -22,15 +24,19 @@ function onInit() {
     gElNextBtn = document.querySelector('.next-btn')
     gElBackBtn = document.querySelector('.back-btn')
     gElPageResult = document.querySelector('.page-result')
+    gElCurrentTime = document.querySelector('.current-time')
+    gElTotalTime = document.querySelector('.total-time')
     const searchTerm = loadFromStorage('searchTerm')
     gElSearchInput.value = searchTerm || ''
     addEventListeners()
-    chrome.runtime.onMessage.addListener(({ type, pageIdx }) => {
+    chrome.runtime.onMessage.addListener(({ type, pageIdx, segTime, totalTime }) => {
         if (type === 'search') {
             showPagination()
+            gElTotalTime.innerText = totalTime
         } else if (type === 'setPageIdx') {
             gPageIdx = pageIdx
             gElPageResult.innerText = gPageIdx + 1
+            gElCurrentTime.innerText = segTime
         }
     })
 
@@ -41,7 +47,7 @@ function onInit() {
 async function onSearch(ev) {
     ev.preventDefault()
     const searchTerm = gElSearchInput.value.trim()
-    document.querySelector('.term-title span').innerText = searchTerm
+    document.querySelector('span.term-title span').innerText = searchTerm
     try {
         let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
         executeContentScript(tab, {
