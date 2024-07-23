@@ -6,16 +6,16 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
         _funcName,
         _searchTerm,
         _pageIdx
-    };
+    }
 
     const TRANSCRIPTS_SEGS_SELECTOR = '#segments-container > ytd-transcript-segment-renderer > div';
     (function () {
 
-        var matchedElScriptSegs;
+        var matchedElScriptSegs
         var matchIdx = 0
 
         function sleep(time = 0) {
-            return new Promise(resolve => setTimeout(resolve, time));
+            return new Promise(resolve => setTimeout(resolve, time))
         }
 
         /**
@@ -26,16 +26,16 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
          */
         function evaluateExpression(expr, title) {
             while (true) {
-                const startIdx = expr.lastIndexOf('(');
-                if (startIdx === -1) break;
-                const endIdx = expr.indexOf(')', startIdx);
-                if (endIdx === -1) break;
+                const startIdx = expr.lastIndexOf('(')
+                if (startIdx === -1) break
+                const endIdx = expr.indexOf(')', startIdx)
+                if (endIdx === -1) break
 
-                const subExpr = expr.substring(startIdx + 1, endIdx);
-                const result = evaluateSimpleExpression(subExpr, title) ? 'true' : 'false';
-                expr = expr.substring(0, startIdx) + result + expr.substring(endIdx + 1);
+                const subExpr = expr.substring(startIdx + 1, endIdx)
+                const result = evaluateSimpleExpression(subExpr, title) ? 'true' : 'false'
+                expr = expr.substring(0, startIdx) + result + expr.substring(endIdx + 1)
             }
-            return evaluateSimpleExpression(expr, title);
+            return evaluateSimpleExpression(expr, title)
         }
 
 
@@ -49,35 +49,35 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
          * @returns {boolean} - The result of the evaluation.
          */
         function evaluateSimpleExpression(expr, title) {
-            const orTerms = expr.split('||').map(term => term.trim());
+            const orTerms = expr.split('||').map(term => term.trim())
 
             return orTerms.some(orTerm => {
-                const andTerms = orTerm.split('&&').map(term => term.trim());
+                const andTerms = orTerm.split('&&').map(term => term.trim())
                 return andTerms.every(andTerm => {
-                    if (andTerm === 'true' || andTerm === '-false') return true;
-                    if (andTerm === 'false' || andTerm === '-true') return false;
+                    if (andTerm === 'true' || andTerm === '-false') return true
+                    if (andTerm === 'false' || andTerm === '-true') return false
 
                     if (andTerm.startsWith('-')) {
-                        const term = andTerm.slice(1);
-                        return !evaluateTerm(term, title);
+                        const term = andTerm.slice(1)
+                        return !evaluateTerm(term, title)
                     }
-                    return evaluateTerm(andTerm, title);
-                });
-            });
+                    return evaluateTerm(andTerm, title)
+                })
+            })
         }
 
         function evaluateTerm(term, title) {
-            const termRegexp = new RegExp(term, 'i');
-            return termRegexp.test(title);
+            const termRegexp = new RegExp(term, 'i')
+            return termRegexp.test(title)
         }
 
         function setMatchedScriptsSegs(_searchTerm) {
-            let elTranScriptsSegs = [...document.querySelectorAll(TRANSCRIPTS_SEGS_SELECTOR)];
+            let elTranScriptsSegs = [...document.querySelectorAll(TRANSCRIPTS_SEGS_SELECTOR)]
             matchedElScriptSegs = elTranScriptsSegs.filter(elScriptSeg => {
-                const scriptSegText = elScriptSeg.querySelector('.segment-text').innerText;
+                const scriptSegText = elScriptSeg.querySelector('.segment-text').innerText
                 return evaluateExpression(_searchTerm, scriptSegText)
-            });
-            return matchedElScriptSegs;
+            })
+            return matchedElScriptSegs
         }
 
         async function handleMatchIdxSelection(pageIdx = 0) {
@@ -102,7 +102,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
             }, 0)
             let intervalId
             intervalId = setTimeout(() => {
-                setMatchedScriptsSegs(_searchTerm);
+                setMatchedScriptsSegs(_searchTerm)
                 if (!matchedElScriptSegs.length) {
                     chrome.runtime.sendMessage({ type: 'no-matches' })
                     return console.log('No matches found')
@@ -114,6 +114,8 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
             }, 1000)
 
         }
+
+        
 
         function onChangePageIdx({ _pageIdx }) {
             handleMatchIdxSelection(_pageIdx)
@@ -127,7 +129,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
 
         //* Execute the main function
         mainFunctions[_funcName](_argsObj)
-    })();
+    })()
 
 
 }

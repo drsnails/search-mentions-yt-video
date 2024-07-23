@@ -48,12 +48,14 @@ function onInit() {
 
 async function onSearch(ev) {
     ev.preventDefault()
+    const elSrcBtn = ev.target.querySelector('.search-btn')
     const searchTerm = gElSearchInput.value.trim()
+    if (!searchTerm) return animateCSS(elSrcBtn, 'shake')
     const formattedSearchTerm = searchTerm
         .replace(/\|\|/g, ' OR ')
         .replace(/\&\&/g, ' AND ')
         .replace(/\s{2,}/g, ' ')
-        
+
     document.querySelector('span.term-title span').innerText = formattedSearchTerm
     try {
         let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
@@ -139,6 +141,19 @@ function hideElement(selector) {
     el.classList.add('hide')
 }
 
+
+function animateCSS(el, animationName, isRemoveClass = true) {
+    return new Promise((resolve, reject) => {
+        el.classList.add(animationName)
+
+        function handleAnimationEnd(event) {
+            event.stopPropagation()
+            if (isRemoveClass) el.classList.remove(animationName)
+            resolve('Animation ended')
+        }
+        el.addEventListener('animationend', handleAnimationEnd, { once: true })
+    })
+}
 
 function debounce(func, wait) {
     let timeout
