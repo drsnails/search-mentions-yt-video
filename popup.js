@@ -43,14 +43,14 @@ function onInit() {
         }
     })
 
-
 }
 
 
 async function onSearch(ev) {
     ev.preventDefault()
     const searchTerm = gElSearchInput.value.trim()
-    document.querySelector('span.term-title span').innerText = searchTerm
+    const formattedSearchTerm = searchTerm.replace(/\|\|/g, 'OR').replace(/\&\&/g, 'AND')
+    document.querySelector('span.term-title span').innerText = formattedSearchTerm
     try {
         let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
         executeContentScript(tab, {
@@ -94,7 +94,6 @@ function addEventListeners() {
     gElPrevBtn.addEventListener('click', () => onChangePageIdx(-1))
     gElNextBtn.addEventListener('click', () => onChangePageIdx(1))
     gElBackBtn.addEventListener('click', showSearchInput)
-
     gElSearchInput.addEventListener('input', onInputSearch)
 }
 

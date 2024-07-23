@@ -7,7 +7,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
         _searchTerm,
         _pageIdx
     };
-    
+
     const TRANSCRIPTS_SEGS_SELECTOR = '#segments-container > ytd-transcript-segment-renderer > div';
     (function () {
 
@@ -18,12 +18,67 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
             return new Promise(resolve => setTimeout(resolve, time));
         }
 
+        /**
+         * Evaluates the given expression by replacing sub-expressions enclosed in parentheses with their results.
+         * @param {string} expr - The expression to evaluate.
+         * @param {string} title - The title to use for evaluation.
+         * @returns {boolean} - The result of the evaluation.
+         */
+        function evaluateExpression(expr, title) {
+            while (true) {
+                const startIdx = expr.lastIndexOf('(');
+                if (startIdx === -1) break;
+                const endIdx = expr.indexOf(')', startIdx);
+                if (endIdx === -1) break;
+
+                const subExpr = expr.substring(startIdx + 1, endIdx);
+                const result = evaluateSimpleExpression(subExpr, title) ? 'true' : 'false';
+                expr = expr.substring(0, startIdx) + result + expr.substring(endIdx + 1);
+            }
+            return evaluateSimpleExpression(expr, title);
+        }
+
+
+        /**
+         * Evaluates a simple expression based on the given title.
+         * The expression can contain logical operators (|| and &&) and terms.
+         * Terms can be true, false, or prefixed with '-' to negate them.
+         * 
+         * @param {string} expr - The expression to evaluate.
+         * @param {string} title - The title to evaluate the expression against.
+         * @returns {boolean} - The result of the evaluation.
+         */
+        function evaluateSimpleExpression(expr, title) {
+            const orTerms = expr.split('||').map(term => term.trim());
+
+            return orTerms.some(orTerm => {
+                const andTerms = orTerm.split('&&').map(term => term.trim());
+                return andTerms.every(andTerm => {
+                    if (andTerm === 'true' || andTerm === '-false') return true;
+                    if (andTerm === 'false' || andTerm === '-true') return false;
+
+                    if (andTerm.startsWith('-')) {
+                        const term = andTerm.slice(1);
+                        return !evaluateTerm(term, title);
+                    }
+                    return evaluateTerm(andTerm, title);
+                });
+            });
+        }
+
+        function evaluateTerm(term, title) {
+            const termRegexp = new RegExp(term, 'i');
+            return termRegexp.test(title);
+        }
+
         function setMatchedScriptsSegs(_searchTerm) {
             let elTranScriptsSegs = [...document.querySelectorAll(TRANSCRIPTS_SEGS_SELECTOR)];
             matchedElScriptSegs = elTranScriptsSegs.filter(elScriptSeg => {
                 const scriptSegText = elScriptSeg.querySelector('.segment-text').innerText;
-                const regex = new RegExp(_searchTerm, 'i');
-                return regex.test(scriptSegText)
+                
+                return evaluateExpression(_searchTerm, scriptSegText)
+                // const regex = new RegExp(_searchTerm, 'i');
+                // return regex.test(scriptSegText)
             });
             return matchedElScriptSegs;
         }
@@ -39,7 +94,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
             const elMatch = matchedElScriptSegs[matchIdx]
             elMatch.click()
             const segTime = elMatch.querySelector('div.segment-timestamp').innerText
-            
+
             chrome.runtime.sendMessage({ type: 'setPageIdx', pageIdx, segTime })
         }
 
