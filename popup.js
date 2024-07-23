@@ -50,7 +50,10 @@ async function onSearch(ev) {
     ev.preventDefault()
     const elSrcBtn = ev.target.querySelector('.search-btn')
     const searchTerm = gElSearchInput.value.trim()
-    if (!searchTerm) return animateCSS(elSrcBtn, 'shake')
+    if (!searchTerm) {
+        gElSearchInput.focus()
+        return animateCSS(elSrcBtn, 'shake')
+    }
     const formattedSearchTerm = searchTerm
         .replace(/\|\|/g, ' OR ')
         .replace(/\&\&/g, ' AND ')
