@@ -30,7 +30,6 @@ function onInit() {
     gElSearchInput.value = searchTerm || ''
     addEventListeners()
     chrome.runtime.onMessage.addListener(({ type, pageIdx, segTime, totalTime }) => {
-        console.log('type:', type)
         if (type === 'search') {
             showPagination()
             gElTotalTime.innerText = totalTime
@@ -52,13 +51,10 @@ async function onSearch(ev) {
     const searchTerm = gElSearchInput.value.trim()
     if (!searchTerm) {
         gElSearchInput.focus()
-        return animateCSS(elSrcBtn, 'shake')
+        return _animateCSS(elSrcBtn, 'shake')
     }
-    const formattedSearchTerm = searchTerm
-        .replace(/\|\|/g, ' OR ')
-        .replace(/\&\&/g, ' AND ')
-        .replace(/\s{2,}/g, ' ')
 
+    const formattedSearchTerm = formatSearchTerm(searchTerm)
     document.querySelector('span.term-title span').innerText = formattedSearchTerm
     try {
         let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
@@ -69,7 +65,6 @@ async function onSearch(ev) {
 
     } catch (error) {
         console.log('error:', error)
-
     }
 }
 
@@ -93,7 +88,7 @@ async function executeContentScript(tab, argsObj = {}) {
     });
 }
 
-const onInputSearch = debounce((ev) => {
+const onInputSearch = _debounce((ev) => {
     const searchTerm = ev.target.value.trim()
     saveToStorage('searchTerm', searchTerm)
 }, 700)
@@ -105,8 +100,6 @@ function addEventListeners() {
     gElBackBtn.addEventListener('click', showSearchInput)
     gElSearchInput.addEventListener('input', onInputSearch)
 }
-
-
 
 
 function saveToStorage(key, data) {
@@ -145,7 +138,30 @@ function hideElement(selector) {
 }
 
 
-function animateCSS(el, animationName, isRemoveClass = true) {
+function formatSearchTerm(str) {
+    const OR = ' OR '
+    const AND = ' AND '
+    str = str
+        .replace(/\|\|/g, OR)
+        .replace(/\&\&/g, AND)
+        .replace(/\s{2,}/g, ' ')
+
+
+    const regex = new RegExp(`(${AND}|${OR})`, 'g')
+    const strParts = str.split(regex)
+    const quotedParts = strParts.map(part => {
+        if (part === AND || part === OR) {
+            return part
+        }
+        return `"${part.trim()}"`
+    })
+
+    const resStr = quotedParts.join('')
+    return resStr
+
+}
+
+function _animateCSS(el, animationName, isRemoveClass = true) {
     return new Promise((resolve, reject) => {
         el.classList.add(animationName)
 
@@ -158,7 +174,7 @@ function animateCSS(el, animationName, isRemoveClass = true) {
     })
 }
 
-function debounce(func, wait) {
+function _debounce(func, wait) {
     let timeout
     return (...args) => {
         const later = () => {
