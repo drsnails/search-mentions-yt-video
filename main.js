@@ -75,10 +75,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
             let elTranScriptsSegs = [...document.querySelectorAll(TRANSCRIPTS_SEGS_SELECTOR)];
             matchedElScriptSegs = elTranScriptsSegs.filter(elScriptSeg => {
                 const scriptSegText = elScriptSeg.querySelector('.segment-text').innerText;
-                
                 return evaluateExpression(_searchTerm, scriptSegText)
-                // const regex = new RegExp(_searchTerm, 'i');
-                // return regex.test(scriptSegText)
             });
             return matchedElScriptSegs;
         }

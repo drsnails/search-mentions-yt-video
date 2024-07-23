@@ -49,7 +49,11 @@ function onInit() {
 async function onSearch(ev) {
     ev.preventDefault()
     const searchTerm = gElSearchInput.value.trim()
-    const formattedSearchTerm = searchTerm.replace(/\|\|/g, 'OR').replace(/\&\&/g, 'AND')
+    const formattedSearchTerm = searchTerm
+        .replace(/\|\|/g, ' OR ')
+        .replace(/\&\&/g, ' AND ')
+        .replace(/\s{2,}/g, ' ')
+        
     document.querySelector('span.term-title span').innerText = formattedSearchTerm
     try {
         let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
