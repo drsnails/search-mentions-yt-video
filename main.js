@@ -26,19 +26,19 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
          */
         function evaluateExpression(expr, title) {
             while (true) {
-                const startIdx = expr.lastIndexOf('(')
+                const startIdx = expr.lastIndexOf('(') // z || (w && t && (a || b) && (c && (d || e)))
                 if (startIdx === -1) break
                 const endIdx = expr.indexOf(')', startIdx)
                 if (endIdx === -1) break
 
                 const subExpr = expr.substring(startIdx + 1, endIdx)
-                const result = evaluateSimpleExpression(subExpr, title) ? 'true' : 'false'
+                const result = evaluateSimpleExpression(subExpr, title) ? 'TRUE' : 'FALSE'
                 expr = expr.substring(0, startIdx) + result + expr.substring(endIdx + 1)
             }
             return evaluateSimpleExpression(expr, title)
         }
 
-
+        // a || b && c
         /**
          * Evaluates a simple expression based on the given title.
          * The expression can contain logical operators (|| and &&) and terms.
@@ -54,8 +54,8 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
             return orTerms.some(orTerm => {
                 const andTerms = orTerm.split('&&').map(term => term.trim())
                 return andTerms.every(andTerm => {
-                    if (andTerm === 'true' || andTerm === '-false') return true
-                    if (andTerm === 'false' || andTerm === '-true') return false
+                    if (andTerm === 'TRUE' || andTerm === '-FALSE') return true
+                    if (andTerm === 'FALSE' || andTerm === '-TRUE') return false
 
                     if (andTerm.startsWith('-')) {
                         const term = andTerm.slice(1)
