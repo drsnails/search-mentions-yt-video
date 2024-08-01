@@ -26,7 +26,7 @@ function onInit() {
     gElPageResult = document.querySelector('.page-result')
     gElCurrentTime = document.querySelector('.current-time')
     gElTotalTime = document.querySelector('.total-time')
-    const searchTerm = loadFromStorage('searchTerm')
+    const searchTerm = _loadFromStorage('searchTerm')
     gElSearchInput.value = searchTerm || ''
     addEventListeners()
     chrome.runtime.onMessage.addListener(({ type, pageIdx, segTime, totalTime }) => {
@@ -90,7 +90,7 @@ async function executeContentScript(tab, argsObj = {}) {
 
 const onInputSearch = _debounce((ev) => {
     const searchTerm = ev.target.value.trim()
-    saveToStorage('searchTerm', searchTerm)
+    _saveToStorage('searchTerm', searchTerm)
 }, 700)
 
 function addEventListeners() {
@@ -100,17 +100,6 @@ function addEventListeners() {
     gElBackBtn.addEventListener('click', showSearchInput)
     gElSearchInput.addEventListener('input', onInputSearch)
 }
-
-
-function saveToStorage(key, data) {
-    localStorage.setItem(key, JSON.stringify(data))
-}
-
-function loadFromStorage(key) {
-    const data = localStorage.getItem(key)
-    return JSON.parse(data)
-}
-
 
 function showPagination() {
     showElement('.pagination')
@@ -126,7 +115,6 @@ function showSearchInput() {
     hideElement('.back-btn')
 }
 
-
 function showElement(selector) {
     const el = document.querySelector(selector)
     el.classList.remove('hide')
@@ -136,7 +124,6 @@ function hideElement(selector) {
     const el = document.querySelector(selector)
     el.classList.add('hide')
 }
-
 
 function formatSearchTerm(str) {
     const OR = ' OR '
@@ -184,4 +171,14 @@ function _debounce(func, wait) {
         clearTimeout(timeout)
         timeout = setTimeout(later, wait)
     }
+}
+
+
+function _saveToStorage(key, data) {
+    localStorage.setItem(key, JSON.stringify(data))
+}
+
+function _loadFromStorage(key) {
+    const data = localStorage.getItem(key)
+    return JSON.parse(data)
 }
