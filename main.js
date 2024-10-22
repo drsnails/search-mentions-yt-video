@@ -67,7 +67,16 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
         }
 
         function evaluateTerm(term, title) {
-            const termRegexp = new RegExp(term, 'i')
+            let regexFlag = 'i'
+            if (term[0] === '/') {
+                const lastSlashIdx = term.lastIndexOf('/')
+                if (lastSlashIdx !== -1) {
+                    regexFlag = term.slice(lastSlashIdx + 1)
+                    term = term.slice(1, lastSlashIdx)
+                }
+            }
+
+            const termRegexp = new RegExp(term, regexFlag)
             return termRegexp.test(title)
         }
 
@@ -115,7 +124,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
 
         }
 
-        
+
 
         function onChangePageIdx({ _pageIdx }) {
             handleMatchIdxSelection(_pageIdx)
