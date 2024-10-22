@@ -70,7 +70,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
             let regexFlag = 'i'
             if (term[0] === '/') {
                 const lastSlashIdx = term.lastIndexOf('/')
-                if (lastSlashIdx !== -1) {
+                if (lastSlashIdx > 0) { // if second "/" exist (not -1) and not equal to the the first one (not 0) 
                     regexFlag = term.slice(lastSlashIdx + 1)
                     term = term.slice(1, lastSlashIdx)
                 }
