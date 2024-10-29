@@ -7,7 +7,6 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
         _searchTerm,
         _pageIdx
     }
-
     const TRANSCRIPTS_SEGS_SELECTOR = '#segments-container > ytd-transcript-segment-renderer > div';
     (function () {
 
@@ -82,27 +81,37 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
 
         function setMatchedScriptsSegs(_searchTerm) {
             let elTranScriptsSegs = [...document.querySelectorAll(TRANSCRIPTS_SEGS_SELECTOR)]
-            matchedElScriptSegs = elTranScriptsSegs.filter(elScriptSeg => {
-                const scriptSegText = elScriptSeg.querySelector('.segment-text').innerText
-                return evaluateExpression(_searchTerm, scriptSegText)
+            matchedElScriptSegs = elTranScriptsSegs.filter((elScriptSeg, idx) => {
+                const elSeg = elScriptSeg.querySelector('.segment-text')
+                const scriptSegText = elSeg.innerText
+                const isStartWithTime = /^\d{1,2}:/.test(elScriptSeg.innerText)
+                return isStartWithTime && evaluateExpression(_searchTerm, scriptSegText)
             })
+            
             return matchedElScriptSegs
         }
 
+
         async function handleMatchIdxSelection(pageIdx = 0) {
             setMatchedScriptsSegs(_searchTerm)
+
             if (!matchedElScriptSegs.length) return console.log('No matches found')
             if (pageIdx < 0) pageIdx = matchedElScriptSegs.length - 1
             if (pageIdx >= matchedElScriptSegs.length) pageIdx = 0
             matchIdx = pageIdx
+           
             scrollTo(0, 0)
             await sleep()
             const elMatch = matchedElScriptSegs[matchIdx]
+            // alert(elMatch + '')
             elMatch.click()
             const segTime = elMatch.querySelector('div.segment-timestamp').innerText
-
+           
             chrome.runtime.sendMessage({ type: 'setPageIdx', pageIdx, segTime })
+
         }
+
+       
 
         function getTranscriptTimestamps({ _searchTerm }) {
 
@@ -125,6 +134,8 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
         }
 
 
+        
+
 
         function onChangePageIdx({ _pageIdx }) {
             handleMatchIdxSelection(_pageIdx)
@@ -142,3 +153,4 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
 
 
 }
+
