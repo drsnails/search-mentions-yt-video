@@ -38,19 +38,52 @@ button {
 .main {
     background-color: var(--mainBgColor);
     color: white;
+    height: 280px;
+    
+    width: 300px;
+    /* display: flex;
+    flex-direction: column;
+    justify-content: space-between; */
+    font-size: 1.8em;
+    padding: 0.65rem;
+}
+
+nav {
+    margin: auto;
+    width: max-content;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 0.6em;
+    .nav-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 0.5rem;
+        &.active {
+            text-decoration-line: underline;
+            font-weight: 700;
+        }
+    }
+
+}
+
+:is(.transcript-search, .heatmap-search):not(.active) {
+    display: none;
+}
+
+.transcript-search, .heatmap-search {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     height: max-content;
-    width: 300px;
-    height: 240px;
-    font-size: 1.8em;
-    padding: 0.65rem;
+    height: 80%;
+    width: 100%;
 }
 
 form {
-    height: 88%;
+    gap: 0.5em;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -64,6 +97,7 @@ form {
         transition: var(--extendTime) transform;
 
         .search-input {
+            
             padding: 0.3rem;
             padding-inline: var(--clearBtnSize) 0;
             border: none;
@@ -121,6 +155,7 @@ form {
 
     .search-btn,
     .back-btn {
+       
         min-width: 90px;
         transition-duration: .2s;
         transition-property: background-color, color, border-color;
@@ -130,17 +165,21 @@ form {
             color: white;
         }
     }
+    .search-btn {
+        margin-top: 2em;
+    }
 }
 
 .pagination {
     display: flex;
     flex-direction: column;
     align-items: center;
+
     .pagination-btns {
         display: flex;
         align-items: center;
         gap: 0.4rem;
-        margin-top: 0.6rem;
+        margin-top: 0.4rem;
 
         >.btn {
             position: relative;

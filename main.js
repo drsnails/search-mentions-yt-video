@@ -1,11 +1,12 @@
 'use strict'
 
 // const TRANSCRIPT_TIME_SELECTOR = '#segments-container > ytd-transcript-segment-renderer:nth-child(36) div.segment-timestamp'
-function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageIdx: _pageIdx }) {
+function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageIdx: _pageIdx, page: _page }) {
     const _argsObj = {
+        _page,
         _funcName,
         _searchTerm,
-        _pageIdx
+        _pageIdx,
     }
     const TRANSCRIPTS_SEGS_SELECTOR = '#segments-container > ytd-transcript-segment-renderer > div';
     (function () {
@@ -87,7 +88,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
                 const isStartWithTime = /^\d{1,2}:/.test(elScriptSeg.innerText)
                 return isStartWithTime && evaluateExpression(_searchTerm, scriptSegText)
             })
-            
+
             return matchedElScriptSegs
         }
 
@@ -99,19 +100,19 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
             if (pageIdx < 0) pageIdx = matchedElScriptSegs.length - 1
             if (pageIdx >= matchedElScriptSegs.length) pageIdx = 0
             matchIdx = pageIdx
-           
+
             scrollTo(0, 0)
             await sleep()
             const elMatch = matchedElScriptSegs[matchIdx]
             // alert(elMatch + '')
             elMatch.click()
             const segTime = elMatch.querySelector('div.segment-timestamp').innerText
-           
+
             chrome.runtime.sendMessage({ type: 'setPageIdx', pageIdx, segTime })
 
         }
 
-       
+
 
         function getTranscriptTimestamps({ _searchTerm }) {
 
@@ -132,9 +133,6 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
             }, 1000)
 
         }
-
-
-        
 
 
         function onChangePageIdx({ _pageIdx }) {

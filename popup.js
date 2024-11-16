@@ -1,5 +1,6 @@
 'use strict'
 
+var gPage = 'transcript'
 var gElSearchBtn
 var gElForm
 var gElSearchInput
@@ -17,18 +18,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 function onInit() {
-    gElForm = document.querySelector('form')
-    gElSearchBtn = document.querySelector('.search-btn')
-    gElSearchInput = document.querySelector('.search-input')
-    gElPrevBtn = document.querySelector('.prev-btn')
-    gElNextBtn = document.querySelector('.next-btn')
-    gElBackBtn = document.querySelector('.back-btn')
-    gElPageResult = document.querySelector('.page-result')
-    gElCurrentTime = document.querySelector('.current-time')
-    gElTotalTime = document.querySelector('.total-time')
+    setGlobalElements()
+    addEventListeners()
+    document.querySelector('.navigation').addEventListener('click', onChangePage)
     const searchTerm = _loadFromStorage('searchTerm')
     gElSearchInput.value = searchTerm || ''
-    addEventListeners()
     chrome.runtime.onMessage.addListener(({ type, pageIdx, segTime, totalTime }) => {
         if (type === 'search') {
             showPagination()
@@ -41,6 +35,22 @@ function onInit() {
             console.log('No matches found')
         }
     })
+
+}
+
+function setGlobalElements() {
+
+    const elPageContainer = document.querySelector(`.${gPage}-search`)
+
+    gElForm = elPageContainer.querySelector('form')
+    gElSearchBtn = elPageContainer.querySelector('.search-btn')
+    gElSearchInput = elPageContainer.querySelector('.search-input')
+    gElPrevBtn = elPageContainer.querySelector('.prev-btn')
+    gElNextBtn = elPageContainer.querySelector('.next-btn')
+    gElBackBtn = elPageContainer.querySelector('.back-btn')
+    gElPageResult = elPageContainer.querySelector('.page-result')
+    gElCurrentTime = elPageContainer.querySelector('.current-time')
+    gElTotalTime = elPageContainer.querySelector('.total-time')
 
 }
 
@@ -59,6 +69,7 @@ async function onSearch(ev) {
     try {
         let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
         executeContentScript(tab, {
+            page: gPage,
             funcName: 'getTranscriptTimestamps',
             searchTerm
         })
@@ -68,10 +79,20 @@ async function onSearch(ev) {
     }
 }
 
+function onIncrementPage() {
+    onChangePageIdx(1)
+
+}
+
+function onDecrementPage() {
+    onChangePageIdx(-1)
+}
+
 async function onChangePageIdx(diff) {
     gPageIdx += diff
     let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     executeContentScript(tab, {
+        page: gPage,
         funcName: 'onChangePageIdx',
         pageIdx: gPageIdx,
         searchTerm: gElSearchInput.value.trim()
@@ -95,11 +116,42 @@ const onInputSearch = _debounce((ev) => {
 
 function addEventListeners() {
     gElForm.addEventListener('submit', onSearch)
-    gElPrevBtn.addEventListener('click', () => onChangePageIdx(-1))
-    gElNextBtn.addEventListener('click', () => onChangePageIdx(1))
+    gElPrevBtn.addEventListener('click', onDecrementPage)
+    gElNextBtn.addEventListener('click', onIncrementPage)
     gElBackBtn.addEventListener('click', showSearchInput)
     gElSearchInput.addEventListener('input', onInputSearch)
+
 }
+
+function onChangePage(ev) {
+
+    const el = ev.target
+    if (el.classList.contains('nav-btn')) {
+        const navPage = el.dataset.page
+        changePage(navPage)
+    }
+
+}
+
+function main() {
+
+
+
+}
+
+function changePage(navPage) {
+    gPage = navPage
+    const els = document.querySelectorAll('[data-page]')
+    els.forEach(el => {
+        el.classList.remove('active')
+        if (el.dataset.page === navPage) {
+            el.classList.add('active')
+        }
+    })
+    setGlobalElements()
+    addEventListeners()
+}
+
 
 function showPagination() {
     showElement('.pagination')
