@@ -140,13 +140,18 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
         }
 
         const mainFunctions = {
-            getTranscriptTimestamps,
-            onChangePageIdx
+            transcript: {
+                getTranscriptTimestamps,
+                onChangePageIdx
+            },
+            heatmap: {
+
+            }
         }
 
-
+        // alert(_page)
         //* Execute the main function
-        mainFunctions[_funcName](_argsObj)
+        mainFunctions[_page][_funcName](_argsObj)
     })()
 
 
