@@ -23,14 +23,16 @@ function onInit() {
     document.querySelector('.navigation').addEventListener('click', onChangePage)
     const searchTerm = _loadFromStorage('searchTerm')
     gElSearchInput.value = searchTerm || ''
-    chrome.runtime.onMessage.addListener(({ type, pageIdx, segTime, totalTime }) => {
+    chrome.runtime.onMessage.addListener(({ type, pageIdx, time, totalTime }) => {
         if (type === 'search') {
             showPagination()
             gElTotalTime.innerText = totalTime
         } else if (type === 'setPageIdx') {
             gPageIdx = pageIdx
             gElPageResult.innerText = gPageIdx + 1
-            gElCurrentTime.innerText = segTime
+            gElCurrentTime.innerText = time
+            console.log('gElPageResult:', gElPageResult)
+            console.log('gElCurrentTime:', gElCurrentTime)
         } else if (type === 'no-matches') {
             console.log('No matches found')
         }
@@ -91,11 +93,16 @@ function onDecrementPage() {
 async function onChangePageIdx(diff) {
     gPageIdx += diff
     let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+    const pageVals = {
+        transcript: {
+            searchTerm: gElSearchInput?.value.trim()
+        }
+    }
     executeContentScript(tab, {
         page: gPage,
         funcName: 'onChangePageIdx',
         pageIdx: gPageIdx,
-        searchTerm: gElSearchInput.value.trim()
+        ...pageVals[gPage]
     })
 }
 
@@ -118,8 +125,8 @@ function addEventListeners() {
     gElForm.addEventListener('submit', onSearch)
     gElPrevBtn.addEventListener('click', onDecrementPage)
     gElNextBtn.addEventListener('click', onIncrementPage)
-    gElBackBtn.addEventListener('click', showSearchInput)
-    gElSearchInput.addEventListener('input', onInputSearch)
+    gElBackBtn && gElBackBtn.addEventListener('click', showSearchInput)
+    gElSearchInput && gElSearchInput.addEventListener('input', onInputSearch)
 
 }
 
@@ -141,6 +148,7 @@ function main() {
 
 function changePage(navPage) {
     gPage = navPage
+    
     const els = document.querySelectorAll('[data-page]')
     els.forEach(el => {
         el.classList.remove('active')
