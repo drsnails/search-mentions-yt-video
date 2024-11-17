@@ -1,17 +1,17 @@
 'use strict'
 
-// Add state management at content script level
+//* state management at content script level
 let contentPageIdx = 0;
 let contentSearchResults = null;
 
 chrome.runtime.onMessage.addListener(({ type, command, pageIdx }) => {
     if (type === 'command') {
-        // If pageIdx is provided (from popup), use it, otherwise calculate new index
+        //* If pageIdx is provided (from popup), use it, otherwise calculate new index
         const newPageIdx = (pageIdx !== undefined) ? 
             pageIdx : 
             contentPageIdx + (command === 'increment-page' ? 1 : -1);
             
-        contentPageIdx = newPageIdx; // Update our local state
+        contentPageIdx = newPageIdx; //* Update our local state
         
         const args = {
             page: 'heatmap',
@@ -289,7 +289,6 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
             onChangePageIdx,
             async execute(pageIdx) {
                 setMatchedScriptsSegs(_searchTerm)
-
                 if (!_matchedElScriptSegs.length) return console.log('No matches found')
                 pageIdx = loopIdx(pageIdx, _matchedElScriptSegs.length)
 
