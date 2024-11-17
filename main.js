@@ -158,6 +158,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
         for (let i = 0; i < numbers.length; i += 2) {
             points.push({ x: numbers[i], y: numbers[i + 1] })
         }
+
         //* Find peaks (local minima in y-values due to SVG coordinate system)
         const step = 1
         const peaks = []
@@ -246,7 +247,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
         const pathData = getHeatMapPath()
         const { peakPercentages } = findHighestPeaksInSVGPath(pathData, 4)
         _pickPercentages = peakPercentages
-        // Store the results in the content script scope
+        //* Store the results in the content script scope
         contentSearchResults = peakPercentages
     }
 
