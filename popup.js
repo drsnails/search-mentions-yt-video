@@ -21,19 +21,11 @@ function onInit() {
     setGlobalElements()
     addEventListeners()
     document.querySelector('.navigation').addEventListener('click', onChangePage)
-    document.addEventListener('keydown', (event) => {
-        if (gPage !== 'heatmap') return
-        if (event.altKey && event.key === '≥') {
-            onIncrementPage()
-            // alert('increment')
-        } else if (event.altKey && event.key === '≤') {
-            onDecrementPage()
-        }
-    })
 
     const searchTerm = _loadFromStorage('searchTerm')
     gElSearchInput.value = searchTerm || ''
-    chrome.runtime.onMessage.addListener(({ type, pageIdx, time, totalTime }) => {
+
+    chrome.runtime.onMessage.addListener(({ type, pageIdx, time, totalTime, command }) => {
         if (type === 'search') {
             showPagination()
             gElTotalTime.innerText = totalTime
@@ -44,9 +36,13 @@ function onInit() {
             totalTime && (gElTotalTime.innerText = totalTime)
         } else if (type === 'no-matches') {
             console.log('No matches found')
+        } else if (type === 'command') {
+            // if (gPage === 'heatmap') {
+                if (command === 'increment-page') onIncrementPage()
+                if (command === 'decrement-page') onDecrementPage()
+            // }
         }
     })
-
 }
 
 function setGlobalElements() {
@@ -90,12 +86,25 @@ async function onSearch(ev) {
     }
 }
 
-function onIncrementPage() {
+async function onIncrementPage() {
+    const newPageIdx = gPageIdx + 1
+    let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+    chrome.tabs.sendMessage(tab.id, {
+        type: 'command',
+        command: 'increment-page',
+        pageIdx: newPageIdx
+    });
     onChangePageIdx(1)
-
 }
 
-function onDecrementPage() {
+async function onDecrementPage() {
+    const newPageIdx = gPageIdx - 1
+    let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+    chrome.tabs.sendMessage(tab.id, {
+        type: 'command',
+        command: 'decrement-page',
+        pageIdx: newPageIdx
+    });
     onChangePageIdx(-1)
 }
 

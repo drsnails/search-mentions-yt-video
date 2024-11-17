@@ -1,6 +1,27 @@
 'use strict'
 
-// const TRANSCRIPT_TIME_SELECTOR = '#segments-container > ytd-transcript-segment-renderer:nth-child(36) div.segment-timestamp'
+// Add state management at content script level
+let contentPageIdx = 0;
+let contentSearchResults = null;
+
+chrome.runtime.onMessage.addListener(({ type, command, pageIdx }) => {
+    if (type === 'command') {
+        // If pageIdx is provided (from popup), use it, otherwise calculate new index
+        const newPageIdx = (pageIdx !== undefined) ? 
+            pageIdx : 
+            contentPageIdx + (command === 'increment-page' ? 1 : -1);
+            
+        contentPageIdx = newPageIdx; // Update our local state
+        
+        const args = {
+            page: 'heatmap',
+            funcName: 'onChangePageIdx',
+            pageIdx: newPageIdx
+        };
+        injectedFunction(args);
+    }
+});
+
 function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageIdx: _pageIdx, page: _page }) {
     const _argsObj = {
         _page,
@@ -92,7 +113,9 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
             const isStartWithTime = /^\d{1,2}:/.test(elScriptSeg.innerText)
             return isStartWithTime && evaluateExpression(_searchTerm, scriptSegText)
         })
-
+        
+        // Store the results in the content script scope
+        contentSearchResults = _matchedElScriptSegs;
         return _matchedElScriptSegs
     }
 
@@ -223,7 +246,8 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
         const pathData = getHeatMapPath()
         const { peakPercentages } = findHighestPeaksInSVGPath(pathData, 4)
         _pickPercentages = peakPercentages
-
+        // Store the results in the content script scope
+        contentSearchResults = peakPercentages
     }
 
     function loopIdx(idx, length) {
@@ -231,10 +255,21 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
         if (newIdx < 0) newIdx = length - 1
         if (newIdx >= length) newIdx = 0
         return newIdx
-
     }
 
     function onChangePageIdx({ _pageIdx = 0 }) {
+        if (!contentSearchResults) {
+            if (_page === 'heatmap') {
+                setHeatPercentages();
+            } else {
+                setMatchedScriptsSegs(_searchTerm);
+            }
+        }
+        
+        if (contentSearchResults) {
+            contentPageIdx = loopIdx(_pageIdx, contentSearchResults.length);
+        }
+        
         mainFunctions[_page].execute(_pageIdx)
     }
 
