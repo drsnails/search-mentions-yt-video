@@ -21,6 +21,16 @@ function onInit() {
     setGlobalElements()
     addEventListeners()
     document.querySelector('.navigation').addEventListener('click', onChangePage)
+    document.addEventListener('keydown', (event) => {
+        if (gPage !== 'heatmap') return
+        if (event.altKey && event.key === '≥') {
+            onIncrementPage()
+            // alert('increment')
+        } else if (event.altKey && event.key === '≤') {
+            onDecrementPage()
+        }
+    })
+
     const searchTerm = _loadFromStorage('searchTerm')
     gElSearchInput.value = searchTerm || ''
     chrome.runtime.onMessage.addListener(({ type, pageIdx, time, totalTime }) => {
@@ -106,7 +116,6 @@ async function onChangePageIdx(diff) {
 }
 
 
-
 async function executeContentScript(tab, argsObj = {}) {
     await chrome.scripting.executeScript({
         target: { tabId: tab.id },
@@ -143,7 +152,7 @@ function onChangePage(ev) {
 
 function changePage(navPage) {
     gPage = navPage
-    
+
     const els = document.querySelectorAll('[data-page]')
     els.forEach(el => {
         el.classList.remove('active')
