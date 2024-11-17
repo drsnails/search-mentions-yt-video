@@ -38,8 +38,8 @@ function onInit() {
             console.log('No matches found')
         } else if (type === 'command') {
             // if (gPage === 'heatmap') {
-                if (command === 'increment-page') onIncrementPage()
-                if (command === 'decrement-page') onDecrementPage()
+            if (command === 'increment-page') onIncrementPage()
+            if (command === 'decrement-page') onDecrementPage()
             // }
         }
     })

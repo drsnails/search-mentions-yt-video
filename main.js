@@ -7,12 +7,12 @@ let contentSearchResults = null;
 chrome.runtime.onMessage.addListener(({ type, command, pageIdx }) => {
     if (type === 'command') {
         //* If pageIdx is provided (from popup), use it, otherwise calculate new index
-        const newPageIdx = (pageIdx !== undefined) ? 
-            pageIdx : 
+        const newPageIdx = (pageIdx !== undefined) ?
+            pageIdx :
             contentPageIdx + (command === 'increment-page' ? 1 : -1);
-            
+
         contentPageIdx = newPageIdx; //* Update our local state
-        
+
         const args = {
             page: 'heatmap',
             funcName: 'onChangePageIdx',
@@ -113,7 +113,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
             const isStartWithTime = /^\d{1,2}:/.test(elScriptSeg.innerText)
             return isStartWithTime && evaluateExpression(_searchTerm, scriptSegText)
         })
-        
+
         // Store the results in the content script scope
         contentSearchResults = _matchedElScriptSegs;
         return _matchedElScriptSegs
@@ -154,11 +154,16 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
             .map(parseFloat)
 
         //* Group numbers into x and y coordinate pairs
-        const points = []
+        let points = []
         for (let i = 0; i < numbers.length; i += 2) {
             points.push({ x: numbers[i], y: numbers[i + 1] })
         }
 
+        //* Filter out points with duplicate y-values
+        //TODO: Potentially can fix the missing peaks bug. check for any issues
+        points = points.filter((point, idx, self) =>
+            idx === self.findIndex(p => p.y === point.y)
+        )
         //* Find peaks (local minima in y-values due to SVG coordinate system)
         const step = 1
         const peaks = []
@@ -167,6 +172,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
             const currY = points[i].y
             const nextY = points[i + step].y
 
+            // TODO: Sometimes a few consecutive points in the peak will have the same y value, account for that and fix the missing peaks bug
             //* Check if the current point is a peak (local minimum)
             if (currY < prevY && currY < nextY) {
                 peaks.push({ index: i, point: points[i] })
@@ -266,11 +272,11 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
                 setMatchedScriptsSegs(_searchTerm);
             }
         }
-        
+
         if (contentSearchResults) {
             contentPageIdx = loopIdx(_pageIdx, contentSearchResults.length);
         }
-        
+
         mainFunctions[_page].execute(_pageIdx)
     }
 
