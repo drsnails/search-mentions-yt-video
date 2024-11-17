@@ -221,7 +221,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
 
     function setHeatPercentages() {
         const pathData = getHeatMapPath()
-        const { peakPercentages } = findHighestPeaksInSVGPath(pathData)
+        const { peakPercentages } = findHighestPeaksInSVGPath(pathData, 4)
         _pickPercentages = peakPercentages
 
     }
@@ -243,7 +243,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
         const hours = Math.floor(videoDuration / 3600);
         const minutes = Math.floor((videoDuration % 3600) / 60)
         const seconds = Math.floor(videoDuration % 60)
-        let formattedTime =`${pad(minutes)}:${pad(seconds)}` 
+        let formattedTime = `${pad(minutes)}:${pad(seconds)}`
         if (hours) formattedTime = `${pad(hours)}:${formattedTime}`;
         return formattedTime;
     }
@@ -257,7 +257,6 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
 
                 if (!_matchedElScriptSegs.length) return console.log('No matches found')
                 pageIdx = loopIdx(pageIdx, _matchedElScriptSegs.length)
-                // matchIdx = pageIdx
 
                 scrollTo(0, 0)
                 await sleep()
@@ -276,26 +275,18 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
                 if (!_pickPercentages) return console.log('No matches found')
                 pageIdx = loopIdx(pageIdx, _pickPercentages.length)
                 const percent = _pickPercentages[pageIdx]
-                // console.log(percent)
                 skipToPercent(percent)
                 const elVideo = document.querySelector(VIDEO_SELECTOR)
                 const videoDuration = +elVideo.duration
                 const timeInSeconds = videoDuration * percent / 100
                 const formattedTime = getFormattedTime(timeInSeconds)
-                chrome.runtime.sendMessage({ type: 'setPageIdx', pageIdx, time: formattedTime })
+                chrome.runtime.sendMessage({ type: 'setPageIdx', pageIdx, time: formattedTime, totalTime: getFormattedTime(videoDuration) })
             }
         }
     }
-    /**
-      100 / 60 === 1.6666666666666667
-      100 % 60 === 0.6666666667
-    */
-    // alert(_page)
+
     //* Execute the main function
     mainFunctions[_page][_funcName](_argsObj)
-
-
-
 
 }
 

@@ -31,8 +31,7 @@ function onInit() {
             gPageIdx = pageIdx
             gElPageResult.innerText = gPageIdx + 1
             gElCurrentTime.innerText = time
-            console.log('gElPageResult:', gElPageResult)
-            console.log('gElCurrentTime:', gElCurrentTime)
+            totalTime && (gElTotalTime.innerText = totalTime)
         } else if (type === 'no-matches') {
             console.log('No matches found')
         }
@@ -140,11 +139,7 @@ function onChangePage(ev) {
 
 }
 
-function main() {
 
-
-
-}
 
 function changePage(navPage) {
     gPage = navPage
