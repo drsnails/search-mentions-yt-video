@@ -1,6 +1,7 @@
 'use strict'
 
 var gPage = 'transcript'
+var gHeatMapPath
 var gElSearchBtn
 var gElForm
 var gElSearchInput
@@ -24,17 +25,21 @@ function onInit() {
 
     const searchTerm = _loadFromStorage('searchTerm')
     gElSearchInput.value = searchTerm || ''
-
-    chrome.runtime.onMessage.addListener(({ type, pageIdx, time, totalTime, command }) => {
+    executeCurrentContentScript({ funcName: 'init' })
+    chrome.runtime.onMessage.addListener(({ type, pageIdx, time, totalTime, command, path, percent }) => {
         if (type === 'search') {
             showPagination()
             gElTotalTime.innerText = totalTime
         } else if (type === 'setPageIdx') {
             gPageIdx = pageIdx
             gElPageResult.innerText = gPageIdx + 1
-            console.log('time:', time)
+            // console.log('time:', time)
             gElCurrentTime.innerText = time
             totalTime && (gElTotalTime.innerText = totalTime)
+            console.log('percent:', percent)
+            percent && insertRedLine(window.innerWidth * (+percent / 100))
+        } else if (type === 'heatmap-path') {
+            setPathInSvg(path)
         } else if (type === 'no-matches') {
             console.log('No matches found')
         } else if (type === 'command') {
@@ -102,6 +107,14 @@ async function onIncrementPage() {
     onChangePageIdx(1)
 }
 
+function setPathInSvg(path) {
+    if (gHeatMapPath === path) return
+    gHeatMapPath = path
+    const elPath = document.querySelector('.yt-heat-map-path')
+    elPath.setAttribute('d', path)
+
+}
+
 async function onDecrementPage() {
     const newPageIdx = gPageIdx - 1
     let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
@@ -134,11 +147,16 @@ async function onChangePageIdx(diff) {
 }
 
 
+async function executeCurrentContentScript(argsObj = {}) {
+    let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+    executeContentScript(tab, argsObj)
+}
+
 async function executeContentScript(tab, argsObj = {}) {
     await chrome.scripting.executeScript({
         target: { tabId: tab.id },
         function: injectedFunction,
-        args: [argsObj]
+        args: [{ ...argsObj, page: gPage, }]
     });
 }
 
@@ -255,6 +273,20 @@ function _debounce(func, wait) {
     }
 }
 
+function insertRedLine(x, color = 'red') {
+    const existingLines = document.querySelectorAll('.red-line')
+    existingLines.forEach(line => line.remove())
+    const line = document.createElement('div')
+    line.classList.add('red-line')
+    line.style.position = 'absolute'
+    line.style.left = `${x}px`
+    // line.style.top = '46vh'
+    line.style.bottom = '0'
+    line.style.width = '1px'
+    line.style.height = '15%'
+    line.style.backgroundColor = color
+    document.body.appendChild(line)
+}
 
 function _saveToStorage(key, data) {
     localStorage.setItem(key, JSON.stringify(data))

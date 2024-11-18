@@ -242,6 +242,12 @@ form {
 }
 
 
+/** SVG */
+.yt-heat-map-svg {
+    position: fixed;
+    bottom: 0;
+}
+
 @keyframes shake {
     0% {
         transform: translateX(0);

@@ -253,7 +253,8 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
     function setHeatPercentages() {
         const pathData = getHeatMapPath()
         if (!pathData) return
-        const { peakPercentages } = findHighestPeaksInSVGPath(pathData, 4)
+        // chrome.runtime.sendMessage({ type: 'heatmap-path', path: pathData });
+        const { peakPercentages } = findHighestPeaksInSVGPath(pathData, 3)
         _pickPercentages = peakPercentages
         //* Store the results in the content script scope
         contentSearchResults = peakPercentages
@@ -294,6 +295,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
         return formattedTime;
     }
 
+
     const mainFunctions = {
         transcript: {
             getTranscriptTimestamps,
@@ -307,9 +309,12 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
                 await sleep()
                 const elMatch = _matchedElScriptSegs[pageIdx]
                 elMatch.click()
-                const segTime = elMatch.querySelector('div.segment-timestamp').innerText
-                // console.log('\x1b[91m' + 'transcript')
-                chrome.runtime.sendMessage({ type: 'setPageIdx', pageIdx, time: segTime })
+
+                const elVideo = document.querySelector(VIDEO_SELECTOR)
+                const videoDuration = +elVideo.duration
+                const currTime = +elVideo.currentTime;
+                const percent = currTime / videoDuration * 100
+                chrome.runtime.sendMessage({ type: 'setPageIdx', pageIdx, time: getFormattedTime(currTime), percent })
             }
         },
         heatmap: {
@@ -326,14 +331,23 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
                 const videoDuration = +elVideo.duration
                 const timeInSeconds = videoDuration * percent / 100
                 const formattedTime = getFormattedTime(timeInSeconds)
-                chrome.runtime.sendMessage({ type: 'setPageIdx', pageIdx, time: formattedTime, totalTime: getFormattedTime(videoDuration) })
+                chrome.runtime.sendMessage({ type: 'setPageIdx', pageIdx, time: formattedTime, totalTime: getFormattedTime(videoDuration), percent })
             }
         }
     }
 
+    function init() {
+        // alert('init')
+        const pathData = getHeatMapPath()
+        if (!pathData) return
+        const elVideo = document.querySelector(VIDEO_SELECTOR)
+        const videoDuration = getFormattedTime(+elVideo.duration)
+        chrome.runtime.sendMessage({ type: 'heatmap-path', path: pathData, totalTime: videoDuration });
+    }
+
     //* Execute the main function
-    // console.log('------_page:', _page)
-    mainFunctions[_page][_funcName](_argsObj)
+    if (_funcName === 'init') init()
+    else mainFunctions[_page][_funcName](_argsObj)
 
 }
 
