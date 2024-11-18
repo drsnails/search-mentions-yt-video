@@ -4,21 +4,22 @@
 let contentPageIdx = 0;
 let contentSearchResults = null;
 
-chrome.runtime.onMessage.addListener(({ type, command, pageIdx }) => {
+chrome.runtime.onMessage.addListener(({ type, command, pageIdx, page, searchTerm }) => {
     if (type === 'command') {
         //* If pageIdx is provided (from popup), use it, otherwise calculate new index
-        const newPageIdx = (pageIdx !== undefined) ?
-            pageIdx :
-            contentPageIdx + (command === 'increment-page' ? 1 : -1);
+        const newPageIdx = (pageIdx !== undefined)
+            ? pageIdx
+            : contentPageIdx + (command === 'increment-page' ? 1 : -1)
 
         contentPageIdx = newPageIdx; //* Update our local state
-
+        page ||= 'heatmap'
         const args = {
-            page: 'heatmap',
+            page,
             funcName: 'onChangePageIdx',
-            pageIdx: newPageIdx
+            pageIdx: newPageIdx,
+            searchTerm
         };
-        injectedFunction(args);
+        injectedFunction(args)
     }
 });
 
@@ -29,6 +30,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
         _searchTerm,
         _pageIdx,
     }
+    // console.log('_argsObj:', _argsObj)
     const TRANSCRIPTS_SEGS_SELECTOR = '#segments-container > ytd-transcript-segment-renderer > div';
     const SVG_SELECTOR = 'div.ytp-heat-map-container > div.ytp-heat-map-chapter > svg'
     const VIDEO_SELECTOR = "#movie_player > div.html5-video-container > video"
@@ -95,7 +97,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
         let regexFlag = 'i'
         if (term[0] === '/') {
             const lastSlashIdx = term.lastIndexOf('/')
-            if (lastSlashIdx > 0) { // if second "/" exist (not -1) and not equal to the the first one (not 0) 
+            if (lastSlashIdx > 0) { //* if second "/" exist, (not -1) and not equal to the first one, (not 0) 
                 regexFlag = term.slice(lastSlashIdx + 1)
                 term = term.slice(1, lastSlashIdx)
             }
@@ -143,7 +145,6 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
 
     //* ------------------- Heatmap -------------------
 
-
     function findHighestPeaksInSVGPath(pathData, prominenceThreshold = 2) {
 
         //* Extract all numbers from the path data
@@ -161,8 +162,8 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
 
         //* Filter out points with duplicate y-values
         //TODO: Potentially can fix the missing peaks bug. check for any issues
-        points = points.filter((point, idx, self) =>
-            idx === self.findIndex(p => p.y === point.y)
+        points = points.filter((point, idx, _points) =>
+            idx === _points.findIndex(p => p.y === point.y)
         )
         //* Find peaks (local minima in y-values due to SVG coordinate system)
         const step = 1
@@ -172,7 +173,6 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
             const currY = points[i].y
             const nextY = points[i + step].y
 
-            // TODO: Sometimes a few consecutive points in the peak will have the same y value, account for that and fix the missing peaks bug
             //* Check if the current point is a peak (local minimum)
             if (currY < prevY && currY < nextY) {
                 peaks.push({ index: i, point: points[i] })
@@ -245,12 +245,14 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
 
     function getHeatMapPath() {
         const elSvg = document.querySelector(SVG_SELECTOR)
+        if (!elSvg) return
         const path = elSvg.querySelector('path').getAttribute('d')
         return path
     }
 
     function setHeatPercentages() {
         const pathData = getHeatMapPath()
+        if (!pathData) return
         const { peakPercentages } = findHighestPeaksInSVGPath(pathData, 4)
         _pickPercentages = peakPercentages
         //* Store the results in the content script scope
@@ -265,6 +267,8 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
     }
 
     function onChangePageIdx({ _pageIdx = 0 }) {
+        // console.log('onChangePageIdx - main.js');
+
         if (!contentSearchResults) {
             if (_page === 'heatmap') {
                 setHeatPercentages();
@@ -302,16 +306,17 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
                 scrollTo(0, 0)
                 await sleep()
                 const elMatch = _matchedElScriptSegs[pageIdx]
-                // alert(elMatch + '')
                 elMatch.click()
                 const segTime = elMatch.querySelector('div.segment-timestamp').innerText
-
+                // console.log('\x1b[91m' + 'transcript')
                 chrome.runtime.sendMessage({ type: 'setPageIdx', pageIdx, time: segTime })
             }
         },
         heatmap: {
             onChangePageIdx,
             execute(pageIdx) {
+                // console.log('\x1b[91m' + 'heatmap')
+
                 if (!_pickPercentages) setHeatPercentages()
                 if (!_pickPercentages) return console.log('No matches found')
                 pageIdx = loopIdx(pageIdx, _pickPercentages.length)
@@ -327,6 +332,7 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
     }
 
     //* Execute the main function
+    // console.log('------_page:', _page)
     mainFunctions[_page][_funcName](_argsObj)
 
 }

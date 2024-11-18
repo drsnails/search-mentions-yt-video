@@ -32,6 +32,7 @@ function onInit() {
         } else if (type === 'setPageIdx') {
             gPageIdx = pageIdx
             gElPageResult.innerText = gPageIdx + 1
+            console.log('time:', time)
             gElCurrentTime.innerText = time
             totalTime && (gElTotalTime.innerText = totalTime)
         } else if (type === 'no-matches') {
@@ -87,12 +88,16 @@ async function onSearch(ev) {
 }
 
 async function onIncrementPage() {
+    // console.log('onIncrementPage - popup');
+
     const newPageIdx = gPageIdx + 1
     let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     chrome.tabs.sendMessage(tab.id, {
         type: 'command',
         command: 'increment-page',
-        pageIdx: newPageIdx
+        pageIdx: newPageIdx,
+        page: gPage,
+        searchTerm: gElSearchInput?.value.trim()
     });
     onChangePageIdx(1)
 }
@@ -103,12 +108,16 @@ async function onDecrementPage() {
     chrome.tabs.sendMessage(tab.id, {
         type: 'command',
         command: 'decrement-page',
-        pageIdx: newPageIdx
+        pageIdx: newPageIdx,
+        page: gPage,
+        searchTerm: gElSearchInput?.value.trim()
     });
     onChangePageIdx(-1)
 }
 
 async function onChangePageIdx(diff) {
+    // console.log('onChangePageIdx - popup');
+
     gPageIdx += diff
     let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     const pageVals = {
@@ -148,7 +157,7 @@ function addEventListeners() {
 }
 
 function onChangePage(ev) {
-
+    gPageIdx = 0
     const el = ev.target
     if (el.classList.contains('nav-btn')) {
         const navPage = el.dataset.page
