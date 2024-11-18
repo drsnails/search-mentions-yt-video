@@ -4,3 +4,6 @@ function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min) + min);
 }
 
+function mapRange(value, originalMin, originalMax, finalMin, finalMax) {
+    return ((value - originalMin) * (finalMax - finalMin)) / (originalMax - originalMin) + finalMin;
+}

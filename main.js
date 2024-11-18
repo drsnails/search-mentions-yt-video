@@ -23,12 +23,21 @@ chrome.runtime.onMessage.addListener(({ type, command, pageIdx, page, searchTerm
     }
 });
 
-function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageIdx: _pageIdx, page: _page }) {
+function injectedFunction({
+    funcName: _funcName,
+    searchTerm: _searchTerm,
+    pageIdx: _pageIdx,
+    page: _page,
+    percent: _percent,
+    seconds: _seconds
+}) {
     const _argsObj = {
         _page,
         _funcName,
         _searchTerm,
         _pageIdx,
+        _percent,
+        _seconds
     }
     // console.log('_argsObj:', _argsObj)
     const TRANSCRIPTS_SEGS_SELECTOR = '#segments-container > ytd-transcript-segment-renderer > div';
@@ -242,6 +251,32 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
 
     }
 
+    function updateVideoTime(seconds) {
+        const elVideo = document.querySelector(VIDEO_SELECTOR)
+        elVideo.currentTime += seconds
+        sendTimeData(elVideo.currentTime / elVideo.duration * 100)
+    }
+
+    function togglePlay() {
+        const elVideo = document.querySelector(VIDEO_SELECTOR)
+        elVideo.paused ? elVideo.play() : elVideo.pause()
+    }
+
+    function changeTime(percent) {
+        skipToPercent(percent)
+        sendTimeData(percent);
+    }
+
+
+    function sendTimeData(percent) {
+        const { formattedCurrTime, formattedTotalTime } = getTimeFromVideo();
+        chrome.runtime.sendMessage({
+            type: 'change-time',
+            percent,
+            time: formattedCurrTime,
+            totalTime: formattedTotalTime
+        });
+    }
 
     function getHeatMapPath() {
         const elSvg = document.querySelector(SVG_SELECTOR)
@@ -310,11 +345,8 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
                 const elMatch = _matchedElScriptSegs[pageIdx]
                 elMatch.click()
 
-                const elVideo = document.querySelector(VIDEO_SELECTOR)
-                const videoDuration = +elVideo.duration
-                const currTime = +elVideo.currentTime;
-                const percent = currTime / videoDuration * 100
-                chrome.runtime.sendMessage({ type: 'setPageIdx', pageIdx, time: getFormattedTime(currTime), percent })
+                const { formattedCurrTime, percent } = getTimeFromVideo()
+                chrome.runtime.sendMessage({ type: 'setPageIdx', pageIdx, time: formattedCurrTime, percent })
             }
         },
         heatmap: {
@@ -336,6 +368,16 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
         }
     }
 
+    function getTimeFromVideo() {
+        const elVideo = document.querySelector(VIDEO_SELECTOR)
+        const videoDuration = +elVideo.duration
+        const currTime = +elVideo.currentTime
+        const percent = currTime / videoDuration * 100
+        const formattedCurrTime = getFormattedTime(currTime)
+        const formattedTotalTime = getFormattedTime(videoDuration)
+        return { formattedCurrTime, formattedTotalTime, percent }
+    }
+
     function init() {
         // alert('init')
         const pathData = getHeatMapPath()
@@ -347,6 +389,9 @@ function injectedFunction({ funcName: _funcName, searchTerm: _searchTerm, pageId
 
     //* Execute the main function
     if (_funcName === 'init') init()
+    else if (_funcName === 'changeTime') changeTime(_percent)
+    else if (_funcName === 'togglePlay') togglePlay()
+    else if (_funcName === 'updateVideoTime') updateVideoTime(_seconds)
     else mainFunctions[_page][_funcName](_argsObj)
 
 }

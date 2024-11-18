@@ -21,35 +21,47 @@ window.addEventListener('DOMContentLoaded', () => {
 function onInit() {
     setGlobalElements()
     addEventListeners()
-    document.querySelector('.navigation').addEventListener('click', onChangePage)
+
 
     const searchTerm = _loadFromStorage('searchTerm')
     gElSearchInput.value = searchTerm || ''
     executeCurrentContentScript({ funcName: 'init' })
     chrome.runtime.onMessage.addListener(({ type, pageIdx, time, totalTime, command, path, percent }) => {
-        if (type === 'search') {
-            showPagination()
-            gElTotalTime.innerText = totalTime
-        } else if (type === 'setPageIdx') {
-            gPageIdx = pageIdx
-            gElPageResult.innerText = gPageIdx + 1
-            // console.log('time:', time)
-            gElCurrentTime.innerText = time
-            totalTime && (gElTotalTime.innerText = totalTime)
-            console.log('percent:', percent)
-            percent && insertRedLine(window.innerWidth * (+percent / 100))
-        } else if (type === 'heatmap-path') {
-            setPathInSvg(path)
-        } else if (type === 'no-matches') {
-            console.log('No matches found')
-        } else if (type === 'command') {
-            // if (gPage === 'heatmap') {
-            if (command === 'increment-page') onIncrementPage()
-            if (command === 'decrement-page') onDecrementPage()
-            // }
+        switch (type) {
+            case 'search':
+                showPagination();
+                gElTotalTime.innerText = totalTime;
+                break;
+            case 'setPageIdx':
+                gPageIdx = pageIdx;
+                gElPageResult.innerText = gPageIdx + 1;
+                renderTime(time, totalTime, percent);
+                break;
+            case 'heatmap-path':
+                setPathInSvg(path);
+                break;
+            case 'change-time':
+                renderTime(time, totalTime, percent);
+                break;
+            case 'no-matches':
+                console.log('No matches found');
+                break;
+            case 'command':
+                if (command === 'increment-page') onIncrementPage();
+                if (command === 'decrement-page') onDecrementPage();
+                break;
+            default:
+                console.log('Unknown message type:', type);
         }
     })
 }
+
+function renderTime(time, totalTime, percent) {
+    gElCurrentTime.innerText = time
+    totalTime && (gElTotalTime.innerText = totalTime)
+    percent && insertRedLine(window.innerWidth * (+percent / 100))
+}
+
 
 function setGlobalElements() {
 
@@ -68,6 +80,22 @@ function setGlobalElements() {
 }
 
 
+function addEventListeners() {
+    addPageEventListeners()
+    document.querySelector('.navigation').addEventListener('click', onChangePage)
+    document.querySelector('svg').addEventListener('click', onSvgHeatmapClick)
+    document.addEventListener('keydown', onKeyDown)
+}
+
+
+
+function addPageEventListeners() {
+    gElForm.addEventListener('submit', onSearch)
+    gElPrevBtn.addEventListener('click', onDecrementPage)
+    gElNextBtn.addEventListener('click', onIncrementPage)
+    gElBackBtn && gElBackBtn.addEventListener('click', showSearchInput)
+    gElSearchInput && gElSearchInput.addEventListener('input', onInputSearch)
+}
 async function onSearch(ev) {
     ev.preventDefault()
     const elSrcBtn = ev.target.querySelector('.search-btn')
@@ -112,7 +140,6 @@ function setPathInSvg(path) {
     gHeatMapPath = path
     const elPath = document.querySelector('.yt-heat-map-path')
     elPath.setAttribute('d', path)
-
 }
 
 async function onDecrementPage() {
@@ -165,13 +192,27 @@ const onInputSearch = _debounce((ev) => {
     _saveToStorage('searchTerm', searchTerm)
 }, 700)
 
-function addEventListeners() {
-    gElForm.addEventListener('submit', onSearch)
-    gElPrevBtn.addEventListener('click', onDecrementPage)
-    gElNextBtn.addEventListener('click', onIncrementPage)
-    gElBackBtn && gElBackBtn.addEventListener('click', showSearchInput)
-    gElSearchInput && gElSearchInput.addEventListener('input', onInputSearch)
+function onKeyDown(ev) {
+    let seconds = 5
+    if (ev.shiftKey) seconds = 10
 
+    if (ev.key === ' ') {
+        executeCurrentContentScript({ funcName: 'togglePlay' })
+    } else if (ev.key === 'ArrowRight') {
+        executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: seconds })
+    } else if (ev.key === 'ArrowLeft') {
+        executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: -seconds })
+    }
+}
+
+async function onSvgHeatmapClick(ev) {
+    const percent = ev.x / window.innerWidth * 100
+    try {
+        executeCurrentContentScript({ funcName: 'changeTime', percent })
+
+    } catch (error) {
+        console.log('error:', error)
+    }
 }
 
 function onChangePage(ev) {
@@ -197,7 +238,7 @@ function changePage(navPage) {
         }
     })
     setGlobalElements()
-    addEventListeners()
+    addPageEventListeners()
 }
 
 
