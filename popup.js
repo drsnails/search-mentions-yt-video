@@ -13,6 +13,8 @@ var gElPageResult
 var gElCurrentTime
 var gElTotalTime
 
+let videoTimeInterval;
+
 window.addEventListener('DOMContentLoaded', () => {
     onInit()
 })
@@ -22,7 +24,7 @@ function onInit() {
     setGlobalElements()
     addEventListeners()
 
-
+    startVideoTimeInterval()
     const searchTerm = _loadFromStorage('searchTerm')
     gElSearchInput.value = searchTerm || ''
     executeCurrentContentScript({ funcName: 'init' })
@@ -41,6 +43,7 @@ function onInit() {
                 setPathInSvg(path);
                 break;
             case 'change-time':
+                console.log('change-time')
                 renderTime(time, totalTime, percent);
                 break;
             case 'no-matches':
@@ -49,6 +52,12 @@ function onInit() {
             case 'command':
                 if (command === 'increment-page') onIncrementPage();
                 if (command === 'decrement-page') onDecrementPage();
+                break;
+            case 'play':
+                startVideoTimeInterval()
+                break;
+            case 'pause':
+                stopVideoTimeInterval()
                 break;
             default:
                 console.log('Unknown message type:', type);
@@ -96,6 +105,16 @@ function addPageEventListeners() {
     gElBackBtn && gElBackBtn.addEventListener('click', showSearchInput)
     gElSearchInput && gElSearchInput.addEventListener('input', onInputSearch)
 }
+
+
+
+function startVideoTimeInterval() {
+    if (videoTimeInterval) return;
+    videoTimeInterval = setInterval(async () => {
+        executeCurrentContentScript({ funcName: 'onTimeInterval' })
+    }, 1000);
+}
+
 async function onSearch(ev) {
     ev.preventDefault()
     const elSrcBtn = ev.target.querySelector('.search-btn')
@@ -180,10 +199,10 @@ async function executeCurrentContentScript(argsObj = {}) {
 }
 
 async function executeContentScript(tab, argsObj = {}) {
-    await chrome.scripting.executeScript({
+    chrome.scripting.executeScript({
         target: { tabId: tab.id },
         function: injectedFunction,
-        args: [{ ...argsObj, page: gPage, }]
+        args: [{ ...argsObj, page: gPage }]
     });
 }
 
@@ -193,6 +212,7 @@ const onInputSearch = _debounce((ev) => {
 }, 700)
 
 function onKeyDown(ev) {
+    if (document.activeElement.tagName === 'INPUT') return
     let seconds = 5
     if (ev.shiftKey) seconds = 10
 
@@ -336,4 +356,9 @@ function _saveToStorage(key, data) {
 function _loadFromStorage(key) {
     const data = localStorage.getItem(key)
     return JSON.parse(data)
+}
+
+function stopVideoTimeInterval() {
+    clearInterval(videoTimeInterval);
+    videoTimeInterval = null;
 }

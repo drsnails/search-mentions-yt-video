@@ -267,12 +267,16 @@ function injectedFunction({
         sendTimeData(percent);
     }
 
+    function onTimeInterval() {
+        sendTimeData()
+    }   
+
 
     function sendTimeData(percent) {
-        const { formattedCurrTime, formattedTotalTime } = getTimeFromVideo();
+        const { formattedCurrTime, formattedTotalTime, percent:_percent } = getTimeFromVideo();
         chrome.runtime.sendMessage({
             type: 'change-time',
-            percent,
+            percent: percent || _percent,
             time: formattedCurrTime,
             totalTime: formattedTotalTime
         });
@@ -384,6 +388,7 @@ function injectedFunction({
         if (!pathData) return
         const elVideo = document.querySelector(VIDEO_SELECTOR)
         const videoDuration = getFormattedTime(+elVideo.duration)
+        sendTimeData()
         chrome.runtime.sendMessage({ type: 'heatmap-path', path: pathData, totalTime: videoDuration });
     }
 
@@ -392,6 +397,7 @@ function injectedFunction({
     else if (_funcName === 'changeTime') changeTime(_percent)
     else if (_funcName === 'togglePlay') togglePlay()
     else if (_funcName === 'updateVideoTime') updateVideoTime(_seconds)
+    else if (_funcName === 'onTimeInterval') onTimeInterval()
     else mainFunctions[_page][_funcName](_argsObj)
 
 }

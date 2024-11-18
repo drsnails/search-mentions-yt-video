@@ -78,7 +78,7 @@ nav {
     align-items: center;
     justify-content: center;
     height: max-content;
-    height: 80%;
+    height: 65%;
     width: 100%;
 }
 
@@ -155,15 +155,24 @@ form {
 
     .search-btn,
     .back-btn {
-       
         min-width: 90px;
         transition-duration: .2s;
         transition-property: background-color, color, border-color;
+    }
 
-        &:hover {
-            background-color: var(--mainBgColor);
-            color: white;
-        }
+    .search-btn:hover {
+        background-color: var(--mainBgColor);
+        color: white;
+    }
+    .back-btn {
+        background-color: var(--mainBgColor);
+        border: none;
+        color: white;
+    }
+
+    .back-btn:hover {
+        background-color: white;
+        color: var(--mainBgColor); 
     }
     .search-btn {
         margin-top: 2em;
