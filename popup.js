@@ -1,6 +1,7 @@
 'use strict'
 
 var gPage = 'transcript'
+var gIsSvgMouseOver = false
 var gHeatMapPath
 var gElSearchBtn
 var gElForm
@@ -12,6 +13,7 @@ var gElBackBtn
 var gElPageResult
 var gElCurrentTime
 var gElTotalTime
+var gElCursorShadow
 
 let videoTimeInterval;
 
@@ -23,8 +25,8 @@ window.addEventListener('DOMContentLoaded', () => {
 function onInit() {
     setGlobalElements()
     addEventListeners()
-
     startVideoTimeInterval()
+    gElCursorShadow = document.querySelector('.cursor-shadow')
     const searchTerm = _loadFromStorage('searchTerm')
     gElSearchInput.value = searchTerm || ''
     executeCurrentContentScript({ funcName: 'init' })
@@ -92,11 +94,29 @@ function setGlobalElements() {
 function addEventListeners() {
     addPageEventListeners()
     document.querySelector('.navigation').addEventListener('click', onChangePage)
-    document.querySelector('svg').addEventListener('click', onSvgHeatmapClick)
     document.addEventListener('keydown', onKeyDown)
+    const elSvg = document.querySelector('svg')
+    elSvg.addEventListener('click', onSvgHeatmapClick)
+    elSvg.addEventListener('mouseenter', onSvgHeatmapMouseEnter)
+    elSvg.addEventListener('mouseleave', onSvgHeatmapMouseLeave)
+    elSvg.addEventListener('mousemove', onSvgHeatmapMouseMove)
 }
 
+function onSvgHeatmapMouseEnter() {
+    gIsSvgMouseOver = true
+    if (!gElCursorShadow) gElCursorShadow = document.querySelector('.cursor-shadow')
+    gElCursorShadow.style.display = 'block'
+}
 
+function onSvgHeatmapMouseMove(ev) {
+    if (!gIsSvgMouseOver) return
+    gElCursorShadow && (gElCursorShadow.style.left = `${ev.x}px`)
+}
+
+function onSvgHeatmapMouseLeave() {
+    gIsSvgMouseOver = false
+    gElCursorShadow && (gElCursorShadow.style.display = 'none')
+}
 
 function addPageEventListeners() {
     gElForm.addEventListener('submit', onSearch)
@@ -139,7 +159,6 @@ async function onSearch(ev) {
 }
 
 async function onIncrementPage() {
-    // console.log('onIncrementPage - popup');
 
     const newPageIdx = gPageIdx + 1
     let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
@@ -151,15 +170,9 @@ async function onIncrementPage() {
         direction: 1,
         searchTerm: gElSearchInput?.value.trim()
     });
-    onChangePageIdx(1)
+    // onChangePageIdx(1)
 }
 
-function setPathInSvg(path) {
-    if (gHeatMapPath === path) return
-    gHeatMapPath = path
-    const elPath = document.querySelector('.yt-heat-map-path')
-    elPath.setAttribute('d', path)
-}
 
 async function onDecrementPage() {
     const newPageIdx = gPageIdx - 1
@@ -172,26 +185,33 @@ async function onDecrementPage() {
         direction: -1,
         searchTerm: gElSearchInput?.value.trim()
     });
-    onChangePageIdx(-1)
+    // onChangePageIdx(-1)
 }
 
 async function onChangePageIdx(diff) {
-    // console.log('onChangePageIdx - popup');
 
-    gPageIdx += diff
-    let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-    const pageVals = {
-        transcript: {
-            searchTerm: gElSearchInput?.value.trim()
-        }
-    }
-    executeContentScript(tab, {
-        page: gPage,
-        funcName: 'onChangePageIdx',
-        pageIdx: gPageIdx,
-        direction: diff,
-        ...pageVals[gPage]
-    })
+    // gPageIdx += diff
+    // let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+    // const pageVals = {
+    //     transcript: {
+    //         searchTerm: gElSearchInput?.value.trim()
+    //     }
+    // }
+    // executeContentScript(tab, {
+    //     page: gPage,
+    //     funcName: 'onChangePageIdx',
+    //     pageIdx: gPageIdx,
+    //     direction: diff,
+    //     ...pageVals[gPage]
+    // })
+}
+
+
+function setPathInSvg(path) {
+    if (gHeatMapPath === path) return
+    gHeatMapPath = path
+    const elPath = document.querySelector('.yt-heat-map-path')
+    elPath.setAttribute('d', path)
 }
 
 
@@ -343,7 +363,6 @@ function insertRedLine(x, color = 'red') {
     line.classList.add('red-line')
     line.style.position = 'absolute'
     line.style.left = `${x}px`
-    // line.style.top = '46vh'
     line.style.bottom = '0'
     line.style.width = '1px'
     line.style.height = '15%'

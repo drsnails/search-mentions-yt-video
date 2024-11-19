@@ -18,7 +18,7 @@ chrome.runtime.onMessage.addListener(({ type, command, pageIdx, page, searchTerm
             funcName: 'onChangePageIdx',
             pageIdx: newPageIdx,
             searchTerm,
-            direction
+            direction: (command === 'increment-page' ? 1 : -1)
         };
         injectedFunction(args)
     }
@@ -30,7 +30,8 @@ function injectedFunction({
     pageIdx: _pageIdx,
     page: _page,
     percent: _percent,
-    seconds: _seconds
+    seconds: _seconds,
+    direction: _direction
 }) {
     const _argsObj = {
         _page,
@@ -38,7 +39,8 @@ function injectedFunction({
         _searchTerm,
         _pageIdx,
         _percent,
-        _seconds
+        _seconds,
+        _direction
     }
     // console.log('_argsObj:', _argsObj)
     const TRANSCRIPTS_SEGS_SELECTOR = '#segments-container > ytd-transcript-segment-renderer > div';
@@ -48,7 +50,7 @@ function injectedFunction({
 
     //* ------------------- Transcript -------------------
     var _matchedElScriptSegs
-    var _pickPercentages
+    var _peakPercentages
     var _videoLength
 
 
@@ -295,7 +297,7 @@ function injectedFunction({
         if (!pathData) return ''
         // chrome.runtime.sendMessage({ type: 'heatmap-path', path: pathData });
         const { peakPercentages } = findHighestPeaksInSVGPath(pathData, 3)
-        _pickPercentages = peakPercentages
+        _peakPercentages = peakPercentages
         //* Store the results in the content script scope
         contentSearchResults = peakPercentages
     }
@@ -307,7 +309,7 @@ function injectedFunction({
         return newIdx
     }
 
-    function onChangePageIdx({ _pageIdx = 0, direction = 1 }) {
+    function onChangePageIdx({ _pageIdx = 0, _direction }) {
         // console.log('onChangePageIdx - main.js');
 
         if (!contentSearchResults) {
@@ -322,7 +324,7 @@ function injectedFunction({
             contentPageIdx = loopIdx(_pageIdx, contentSearchResults.length);
         }
 
-        mainFunctions[_page].execute(_pageIdx)
+        mainFunctions[_page].execute(_pageIdx, _direction)
     }
 
     function getFormattedTime(videoDuration) {
@@ -356,15 +358,27 @@ function injectedFunction({
         },
         heatmap: {
             onChangePageIdx,
-            execute(pageIdx) {
+            execute(pageIdx, direction) {
                 // console.log('\x1b[91m' + 'heatmap')
 
-                if (!_pickPercentages) setHeatPercentages()
-                if (!_pickPercentages) return console.log('No matches found')
+                if (!_peakPercentages) setHeatPercentages()
+                if (!_peakPercentages) return console.log('No matches found')
                 const { videoDuration, formattedTotalTime, currTime: prevSkippedTime } = getTimeFromVideo()
 
-                pageIdx = loopIdx(pageIdx, _pickPercentages.length)
-                const percent = _pickPercentages[pageIdx]
+                /**
+                *! Not working as expected, problem while video is loading and while going backwards while the video is playing
+                ** Skip to the next or previous peak percentage from the current time
+                let nextPageIdx
+                if (direction === 1) {
+                    nextPageIdx = _peakPercentages.findIndex(peakPercent => +peakPercent / 100 * videoDuration > prevSkippedTime)
+                } else if (direction === -1) {
+                    nextPageIdx = _peakPercentages.findLastIndex(peakPercent => +peakPercent / 100 * videoDuration < prevSkippedTime)
+                }
+                if (nextPageIdx && nextPageIdx !== -1) pageIdx = nextPageIdx
+                */
+
+                pageIdx = loopIdx(pageIdx, _peakPercentages.length)
+                const percent = _peakPercentages[pageIdx]
                 skipToPercent(percent)
                 const calculatedTimeInSeconds = videoDuration * percent / 100
                 const formattedTime = getFormattedTime(calculatedTimeInSeconds)
