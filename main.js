@@ -364,17 +364,21 @@ function injectedFunction({
                 const { videoDuration, formattedTotalTime, currTime: prevSkippedTime } = getTimeFromVideo()
 
                 /**
-                *! Problems while going backwards while the video is playing
-                *TODO: For now, only going forward, fix this
-                */
-                let nextPageIdx
-                if (direction === 1) {
-                    nextPageIdx = _peakPercentages.findIndex(peakPercent => +peakPercent / 100 * videoDuration > prevSkippedTime)
-                }
-                // else if (direction === -1) {
+                *! Waiting for the video to load, then going backwards.
+                *! Problems while going backwards, get stuck on the last peak
+                *TODO: Make going forward work regardless of the video loading time
+                *TODO: Fix backwards getting stuck on the last peak
+                // let nextPageIdx
+                // if (direction === 1) {
+                //     nextPageIdx = _peakPercentages.findIndex(peakPercent => +peakPercent / 100 * videoDuration > prevSkippedTime)
+                // } else if (direction === -1) {
                 //     nextPageIdx = _peakPercentages.findLastIndex(peakPercent => +peakPercent / 100 * videoDuration < prevSkippedTime)
                 // }
-                if (nextPageIdx && nextPageIdx !== pageIdx && nextPageIdx !== -1) pageIdx = nextPageIdx
+                // if (nextPageIdx && nextPageIdx !== pageIdx && nextPageIdx !== -1) {
+                //     pageIdx = nextPageIdx
+                // }
+                */
+
 
                 pageIdx = loopIdx(pageIdx, _peakPercentages.length)
                 const percent = _peakPercentages[pageIdx]
