@@ -4,7 +4,7 @@
 let contentPageIdx = 0;
 let contentSearchResults = null;
 
-chrome.runtime.onMessage.addListener(({ type, command, pageIdx, page, searchTerm }) => {
+chrome.runtime.onMessage.addListener(({ type, command, pageIdx, page, searchTerm, direction }) => {
     if (type === 'command') {
         //* If pageIdx is provided (from popup), use it, otherwise calculate new index
         const newPageIdx = (pageIdx !== undefined)
@@ -17,7 +17,8 @@ chrome.runtime.onMessage.addListener(({ type, command, pageIdx, page, searchTerm
             page,
             funcName: 'onChangePageIdx',
             pageIdx: newPageIdx,
-            searchTerm
+            searchTerm,
+            direction
         };
         injectedFunction(args)
     }
@@ -269,11 +270,11 @@ function injectedFunction({
 
     function onTimeInterval() {
         sendTimeData()
-    }   
+    }
 
 
     function sendTimeData(percent) {
-        const { formattedCurrTime, formattedTotalTime, percent:_percent } = getTimeFromVideo();
+        const { formattedCurrTime, formattedTotalTime, percent: _percent } = getTimeFromVideo();
         chrome.runtime.sendMessage({
             type: 'change-time',
             percent: percent || _percent,
@@ -291,7 +292,7 @@ function injectedFunction({
 
     function setHeatPercentages() {
         const pathData = getHeatMapPath()
-        if (!pathData) return
+        if (!pathData) return ''
         // chrome.runtime.sendMessage({ type: 'heatmap-path', path: pathData });
         const { peakPercentages } = findHighestPeaksInSVGPath(pathData, 3)
         _pickPercentages = peakPercentages
@@ -306,7 +307,7 @@ function injectedFunction({
         return newIdx
     }
 
-    function onChangePageIdx({ _pageIdx = 0 }) {
+    function onChangePageIdx({ _pageIdx = 0, direction = 1 }) {
         // console.log('onChangePageIdx - main.js');
 
         if (!contentSearchResults) {
@@ -360,14 +361,14 @@ function injectedFunction({
 
                 if (!_pickPercentages) setHeatPercentages()
                 if (!_pickPercentages) return console.log('No matches found')
+                const { videoDuration, formattedTotalTime, currTime: prevSkippedTime } = getTimeFromVideo()
+
                 pageIdx = loopIdx(pageIdx, _pickPercentages.length)
                 const percent = _pickPercentages[pageIdx]
                 skipToPercent(percent)
-                const elVideo = document.querySelector(VIDEO_SELECTOR)
-                const videoDuration = +elVideo.duration
-                const timeInSeconds = videoDuration * percent / 100
-                const formattedTime = getFormattedTime(timeInSeconds)
-                chrome.runtime.sendMessage({ type: 'setPageIdx', pageIdx, time: formattedTime, totalTime: getFormattedTime(videoDuration), percent })
+                const calculatedTimeInSeconds = videoDuration * percent / 100
+                const formattedTime = getFormattedTime(calculatedTimeInSeconds)
+                chrome.runtime.sendMessage({ type: 'setPageIdx', pageIdx, time: formattedTime, totalTime: formattedTotalTime, percent })
             }
         }
     }
@@ -379,7 +380,7 @@ function injectedFunction({
         const percent = currTime / videoDuration * 100
         const formattedCurrTime = getFormattedTime(currTime)
         const formattedTotalTime = getFormattedTime(videoDuration)
-        return { formattedCurrTime, formattedTotalTime, percent }
+        return { formattedCurrTime, formattedTotalTime, percent, videoDuration, currTime }
     }
 
     function init() {

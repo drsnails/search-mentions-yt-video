@@ -107,12 +107,11 @@ function addPageEventListeners() {
 }
 
 
-
 function startVideoTimeInterval() {
     if (videoTimeInterval) return;
     videoTimeInterval = setInterval(async () => {
         executeCurrentContentScript({ funcName: 'onTimeInterval' })
-    }, 1000);
+    }, 500);
 }
 
 async function onSearch(ev) {
@@ -149,6 +148,7 @@ async function onIncrementPage() {
         command: 'increment-page',
         pageIdx: newPageIdx,
         page: gPage,
+        direction: 1,
         searchTerm: gElSearchInput?.value.trim()
     });
     onChangePageIdx(1)
@@ -169,6 +169,7 @@ async function onDecrementPage() {
         command: 'decrement-page',
         pageIdx: newPageIdx,
         page: gPage,
+        direction: -1,
         searchTerm: gElSearchInput?.value.trim()
     });
     onChangePageIdx(-1)
@@ -188,6 +189,7 @@ async function onChangePageIdx(diff) {
         page: gPage,
         funcName: 'onChangePageIdx',
         pageIdx: gPageIdx,
+        direction: diff,
         ...pageVals[gPage]
     })
 }
