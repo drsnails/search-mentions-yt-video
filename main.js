@@ -359,23 +359,22 @@ function injectedFunction({
         heatmap: {
             onChangePageIdx,
             execute(pageIdx, direction) {
-                // console.log('\x1b[91m' + 'heatmap')
-
                 if (!_peakPercentages) setHeatPercentages()
                 if (!_peakPercentages) return console.log('No matches found')
                 const { videoDuration, formattedTotalTime, currTime: prevSkippedTime } = getTimeFromVideo()
 
                 /**
-                *! Not working as expected, problem while video is loading and while going backwards while the video is playing
-                ** Skip to the next or previous peak percentage from the current time
+                *! Problems while going backwards while the video is playing
+                *TODO: For now, only going forward, fix this
+                */
                 let nextPageIdx
                 if (direction === 1) {
                     nextPageIdx = _peakPercentages.findIndex(peakPercent => +peakPercent / 100 * videoDuration > prevSkippedTime)
-                } else if (direction === -1) {
-                    nextPageIdx = _peakPercentages.findLastIndex(peakPercent => +peakPercent / 100 * videoDuration < prevSkippedTime)
                 }
-                if (nextPageIdx && nextPageIdx !== -1) pageIdx = nextPageIdx
-                */
+                // else if (direction === -1) {
+                //     nextPageIdx = _peakPercentages.findLastIndex(peakPercent => +peakPercent / 100 * videoDuration < prevSkippedTime)
+                // }
+                if (nextPageIdx && nextPageIdx !== pageIdx && nextPageIdx !== -1) pageIdx = nextPageIdx
 
                 pageIdx = loopIdx(pageIdx, _peakPercentages.length)
                 const percent = _peakPercentages[pageIdx]
