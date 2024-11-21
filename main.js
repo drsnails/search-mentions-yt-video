@@ -381,9 +381,7 @@ function injectedFunction({
                 const { videoDuration, formattedTotalTime, currTime: prevSkippedTime } = getTimeFromVideo()
 
                 /**
-                *! Waiting for the video to load, then going backwards.
-                *! Problems while going backwards, get stuck on the last peak
-                *TODO: Make going forward work regardless of the video loading time
+                *! Problems while going backwards, get stuck on the last peak. for now its disabled
                 *TODO: Fix backwards getting stuck on the last peak
                 */
                 if (_isSkipToClosest) {
