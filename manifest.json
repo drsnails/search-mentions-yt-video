@@ -20,6 +20,18 @@
                 "default": "Alt+Comma"
             },
             "description": "Decrement page"
+        },
+        "increment-page-from-time": {
+            "suggested_key": {
+                "default": "Alt+Shift+Period"
+            },
+            "description": "Increment page from current time"
+        },
+        "decrement-page-from-time": {
+            "suggested_key": {
+                "default": "Alt+Shift+Comma"
+            },
+            "description": "Decrement page from current time"
         }
     },
     "background": {

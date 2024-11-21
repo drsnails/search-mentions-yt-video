@@ -5,11 +5,12 @@ let contentPageIdx = 0;
 let contentSearchResults = null;
 
 chrome.runtime.onMessage.addListener(({ type, command, pageIdx, page, searchTerm, direction }) => {
+    const options = ['increment-page', 'decrement-page']
     if (type === 'command') {
         //* If pageIdx is provided (from popup), use it, otherwise calculate new index
         const newPageIdx = (pageIdx !== undefined)
             ? pageIdx
-            : contentPageIdx + (command === 'increment-page' ? 1 : -1)
+            : contentPageIdx + (command.startsWith('increment-page') ? 1 : -1)
 
         contentPageIdx = newPageIdx; //* Update our local state
         page ||= 'heatmap'
@@ -18,7 +19,8 @@ chrome.runtime.onMessage.addListener(({ type, command, pageIdx, page, searchTerm
             funcName: 'onChangePageIdx',
             pageIdx: newPageIdx,
             searchTerm,
-            direction: (command === 'increment-page' ? 1 : -1)
+            direction: command.startsWith('increment-page') ? 1 : -1,
+            isSkipToClosest: command.endsWith('from-time')
         };
         injectedFunction(args)
     }
@@ -31,7 +33,8 @@ function injectedFunction({
     page: _page,
     percent: _percent,
     seconds: _seconds,
-    direction: _direction
+    direction: _direction,
+    isSkipToClosest: _isSkipToClosest,
 }) {
     const _argsObj = {
         _page,
@@ -40,7 +43,8 @@ function injectedFunction({
         _pageIdx,
         _percent,
         _seconds,
-        _direction
+        _direction,
+        _isSkipToClosest
     }
     // console.log('_argsObj:', _argsObj)
     const TRANSCRIPTS_SEGS_SELECTOR = '#segments-container > ytd-transcript-segment-renderer > div';
@@ -240,8 +244,8 @@ function injectedFunction({
 
         //? Does this line do anything good?
         // Todo: Check it
-        percentCorrection = Math.max(0.4, percentCorrection)
-        
+        percentCorrection = Math.max(0.35, percentCorrection)
+
         //* Convert peak x-locations to percentages of the total width
         const peakPercentages = significantPeaks.map(p => ((p.peak.x / maxX) * 100 - percentCorrection).toFixed(2))
 
@@ -309,7 +313,7 @@ function injectedFunction({
         const minutes = videoDuration / 60
         let percentCorrection = 0.6
         if (minutes < 12) percentCorrection = 1.2
-        if (minutes > 40) percentCorrection = 0.4
+        if (minutes > 50) percentCorrection = 0.4
         const { peakPercentages } = findHighestPeaksInSVGPath(pathData, 3, percentCorrection)
         _peakPercentages = peakPercentages
         //* Store the results in the content script scope
@@ -381,19 +385,23 @@ function injectedFunction({
                 *! Problems while going backwards, get stuck on the last peak
                 *TODO: Make going forward work regardless of the video loading time
                 *TODO: Fix backwards getting stuck on the last peak
-                // let nextPageIdx
-                // if (direction === 1) {
-                //     nextPageIdx = _peakPercentages.findIndex(peakPercent => +peakPercent / 100 * videoDuration > prevSkippedTime)
-                // } else if (direction === -1) {
-                //     nextPageIdx = _peakPercentages.findLastIndex(peakPercent => +peakPercent / 100 * videoDuration < prevSkippedTime)
-                // }
-                // if (nextPageIdx && nextPageIdx !== pageIdx && nextPageIdx !== -1) {
-                //     pageIdx = nextPageIdx
-                // }
                 */
+                if (_isSkipToClosest) {
+                    let nextPageIdx
+                    if (direction === 1) {
+                        nextPageIdx = _peakPercentages.findIndex(peakPercent => +peakPercent / 100 * videoDuration > prevSkippedTime)
+                    } else if (direction === -1) {
+                        // nextPageIdx = _peakPercentages.findLastIndex(peakPercent => +peakPercent / 100 * videoDuration < prevSkippedTime)
+                    }
+                    if (nextPageIdx && nextPageIdx !== pageIdx && nextPageIdx !== -1) {
+                        pageIdx = nextPageIdx
+                    }
+                }
 
 
                 pageIdx = loopIdx(pageIdx, _peakPercentages.length)
+                contentPageIdx = pageIdx
+        
                 const percent = _peakPercentages[pageIdx]
                 skipToPercent(percent)
                 const calculatedTimeInSeconds = videoDuration * percent / 100

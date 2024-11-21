@@ -52,8 +52,8 @@ function onInit() {
                 console.log('No matches found');
                 break;
             case 'command':
-                if (command === 'increment-page') onIncrementPage();
-                if (command === 'decrement-page') onDecrementPage();
+                if (command.startsWith('increment-page')) onIncrementPage('ev', command);
+                if (command.startsWith('decrement-page')) onDecrementPage('ev', command);
                 break;
             case 'play':
                 startVideoTimeInterval()
@@ -158,32 +158,35 @@ async function onSearch(ev) {
     }
 }
 
-async function onIncrementPage() {
-
+async function onIncrementPage(ev, command = 'increment-page') {
+    console.log('command:', command)
     const newPageIdx = gPageIdx + 1
     let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     chrome.tabs.sendMessage(tab.id, {
         type: 'command',
-        command: 'increment-page',
+        command,
         pageIdx: newPageIdx,
         page: gPage,
         direction: 1,
-        searchTerm: gElSearchInput?.value.trim()
+        searchTerm: gElSearchInput?.value.trim(),
+        isSkipToClosest: command.endsWith('from-time')
     });
     // onChangePageIdx(1)
 }
 
 
-async function onDecrementPage() {
+async function onDecrementPage(ev, command = 'decrement-page') {
+
     const newPageIdx = gPageIdx - 1
     let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     chrome.tabs.sendMessage(tab.id, {
         type: 'command',
-        command: 'decrement-page',
+        command,
         pageIdx: newPageIdx,
         page: gPage,
         direction: -1,
-        searchTerm: gElSearchInput?.value.trim()
+        searchTerm: gElSearchInput?.value.trim(),
+        isSkipToClosest: command.endsWith('from-time')
     });
     // onChangePageIdx(-1)
 }
