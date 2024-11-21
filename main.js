@@ -148,8 +148,8 @@ function injectedFunction({
                 return console.log('No matches found')
             }
             onChangePageIdx({})
-            const elTimeDuration = document.querySelector('.ytp-time-display .ytp-time-duration')
-            chrome.runtime.sendMessage({ type: 'search', totalTime: elTimeDuration.innerText })
+            const { formattedTotalTime } = getTimeFromVideo()
+            chrome.runtime.sendMessage({ type: 'search', totalTime: formattedTotalTime })
             clearTimeout(intervalId)
         }, 1000)
 
@@ -157,7 +157,16 @@ function injectedFunction({
 
     //* ------------------- Heatmap -------------------
 
-    function findHighestPeaksInSVGPath(pathData, prominenceThreshold = 2) {
+    /**
+     * Finds the highest peaks in an SVG path data string based on prominence.
+     *
+     * @param {string} pathData - The SVG path data string.
+     * @param {number} [prominenceThreshold=2] - The threshold for peak prominence as a percentage of the maximum prominence.
+     * @param {number} [percentCorrection=0.6] - The correction factor to adjust the peak x-locations percentages.
+     * @returns {Object} An object containing the peak percentages.
+     * @returns {string[]} peakPercentages - An array of peak x-locations as percentages of the total width.
+     */
+    function findHighestPeaksInSVGPath(pathData, prominenceThreshold = 2, percentCorrection = 0.6) {
 
         //* Extract all numbers from the path data
         const numbers = pathData
@@ -229,11 +238,12 @@ function injectedFunction({
         //* Calculate the total width (maximum x-value)
         const maxX = Math.max(...points.map(p => p.x))
 
-        //* A constant representing the time correction factor, making the percent a bit before the peak itself
-        const timeCorrection = 0.6
-
+        //? Does this line do anything good?
+        // Todo: Check it
+        percentCorrection = Math.max(0.4, percentCorrection)
+        
         //* Convert peak x-locations to percentages of the total width
-        const peakPercentages = significantPeaks.map(p => ((p.peak.x / maxX) * 100 - timeCorrection).toFixed(2))
+        const peakPercentages = significantPeaks.map(p => ((p.peak.x / maxX) * 100 - percentCorrection).toFixed(2))
 
 
         return {
@@ -295,8 +305,12 @@ function injectedFunction({
     function setHeatPercentages() {
         const pathData = getHeatMapPath()
         if (!pathData) return ''
-        // chrome.runtime.sendMessage({ type: 'heatmap-path', path: pathData });
-        const { peakPercentages } = findHighestPeaksInSVGPath(pathData, 3)
+        const { videoDuration } = getTimeFromVideo()
+        const minutes = videoDuration / 60
+        let percentCorrection = 0.6
+        if (minutes < 12) percentCorrection = 1.2
+        if (minutes > 40) percentCorrection = 0.4
+        const { peakPercentages } = findHighestPeaksInSVGPath(pathData, 3, percentCorrection)
         _peakPercentages = peakPercentages
         //* Store the results in the content script scope
         contentSearchResults = peakPercentages
@@ -310,7 +324,6 @@ function injectedFunction({
     }
 
     function onChangePageIdx({ _pageIdx = 0, _direction }) {
-        // console.log('onChangePageIdx - main.js');
 
         if (!contentSearchResults) {
             if (_page === 'heatmap') {
