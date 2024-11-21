@@ -5,7 +5,6 @@ let contentPageIdx = 0;
 let contentSearchResults = null;
 
 chrome.runtime.onMessage.addListener(({ type, command, pageIdx, page, searchTerm, direction }) => {
-    const options = ['increment-page', 'decrement-page']
     if (type === 'command') {
         //* If pageIdx is provided (from popup), use it, otherwise calculate new index
         const newPageIdx = (pageIdx !== undefined)

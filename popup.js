@@ -52,8 +52,8 @@ function onInit() {
                 console.log('No matches found');
                 break;
             case 'command':
-                if (command.startsWith('increment-page')) onIncrementPage('ev', command);
-                if (command.startsWith('decrement-page')) onDecrementPage('ev', command);
+                if (command.startsWith('increment-page')) onIncrementPage({}, command);
+                if (command.startsWith('decrement-page')) onDecrementPage({}, command);
                 break;
             case 'play':
                 startVideoTimeInterval()
@@ -239,14 +239,18 @@ const onInputSearch = _debounce((ev) => {
 function onKeyDown(ev) {
     if (document.activeElement.tagName === 'INPUT') return
     let seconds = 5
-    if (ev.shiftKey) seconds = 10
+    if (ev.shiftKey) seconds = 30
 
-    if (ev.key === ' ') {
+    if (ev.key === ' ' || ev.key === 'k') {
         executeCurrentContentScript({ funcName: 'togglePlay' })
     } else if (ev.key === 'ArrowRight') {
         executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: seconds })
     } else if (ev.key === 'ArrowLeft') {
         executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: -seconds })
+    } else if (ev.key.toLowerCase() === 'l') {
+        executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: 10 })
+    } else if (ev.key.toLowerCase() === 'j') {
+        executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: -10 })
     }
 }
 
