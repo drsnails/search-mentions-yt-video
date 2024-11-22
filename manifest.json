@@ -1,7 +1,7 @@
 {
-    "name": "Search Mentions in Youtube Video",
-    "description": "Search Mentions in Youtube Video",
-    "version": "0.0.1",
+    "name": "YouTube Video Search",
+    "description": "Search through YouTube video transcripts and heatmaps to find specific mentions and highlights",
+    "version": "1.0.0",
     "manifest_version": 3,
     "permissions": [
         "activeTab",
@@ -61,5 +61,7 @@
                 "./main.js"
             ]
         }
-    ]
+    ],
+    "author": "anistu@gmail.com",
+    "homepage_url": "https://github.com/drsnails/youtube-video-search"
 }
