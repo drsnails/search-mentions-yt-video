@@ -25,6 +25,18 @@ chrome.runtime.onMessage.addListener(({ type, command, pageIdx, page, searchTerm
     }
 });
 
+document.addEventListener('keydown', (ev) => {
+    if (ev.altKey) {
+        if (ev.code === 'KeyX') {
+            chrome.runtime.sendMessage({ type: 'keybind', altKey: ev.altKey, shiftKey: ev.shiftKey, key: 'x' });
+        } else if (ev.code === 'KeyZ') {
+            chrome.runtime.sendMessage({ type: 'keybind', altKey: ev.altKey, shiftKey: ev.shiftKey, key: 'z' });
+        }
+    }
+});
+
+
+
 function injectedFunction({
     funcName: _funcName,
     searchTerm: _searchTerm,
