@@ -253,10 +253,6 @@ function injectedFunction({
         //* Calculate the total width (maximum x-value)
         const maxX = Math.max(...points.map(p => p.x))
 
-        //? Does this line do anything good?
-        // Todo: Check it
-        percentCorrection = Math.max(0.35, percentCorrection)
-
         //* Convert peak x-locations to percentages of the total width
         const peakPercentages = significantPeaks.map(p => ((p.peak.x / maxX) * 100 - percentCorrection).toFixed(2))
 
@@ -324,7 +320,7 @@ function injectedFunction({
         const minutes = videoDuration / 60
         let percentCorrection = 0.6
         if (minutes < 12) percentCorrection = 1.2
-        if (minutes > 50) percentCorrection = 0.4
+        if (minutes > 45) percentCorrection = 0.4
         const { peakPercentages } = findHighestPeaksInSVGPath(pathData, 3, percentCorrection)
         _peakPercentages = peakPercentages
         //* Store the results in the content script scope

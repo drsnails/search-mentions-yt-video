@@ -248,9 +248,9 @@ function onKeyDown(ev) {
     } else if (ev.key === 'ArrowLeft') {
         executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: -seconds })
     } else if (ev.key.toLowerCase() === 'l') {
-        executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: 10 })
+        executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: seconds * 2 })
     } else if (ev.key.toLowerCase() === 'j') {
-        executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: -10 })
+        executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: -seconds * 2 })
     }
 }
 
