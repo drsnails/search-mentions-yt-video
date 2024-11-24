@@ -45,7 +45,6 @@ function onInit() {
                 setPathInSvg(path);
                 break;
             case 'change-time':
-                console.log('change-time')
                 renderTime(time, totalTime, percent);
                 break;
             case 'no-matches':
@@ -158,8 +157,7 @@ async function onSearch(ev) {
     }
 }
 
-async function onIncrementPage(ev, command = 'increment-page') {
-    console.log('command:', command)
+async function onIncrementPage(ev, command = 'increment-page-from-time') {
     const newPageIdx = gPageIdx + 1
     let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     chrome.tabs.sendMessage(tab.id, {
@@ -175,7 +173,7 @@ async function onIncrementPage(ev, command = 'increment-page') {
 }
 
 
-async function onDecrementPage(ev, command = 'decrement-page') {
+async function onDecrementPage(ev, command = 'decrement-page-from-time') {
 
     const newPageIdx = gPageIdx - 1
     let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })

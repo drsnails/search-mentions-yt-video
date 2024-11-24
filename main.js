@@ -35,6 +35,57 @@ document.addEventListener('keydown', (ev) => {
     }
 });
 
+var gIsVideoBuffering = false
+var gElVideo = setupVideoListeners()
+
+
+// Initial setup
+function setupVideoListeners() {
+    const elVideo = document.querySelector('#movie_player > div.html5-video-container > video');
+    if (elVideo) {
+        attachVideoEventListeners(elVideo);
+    }
+    return elVideo
+}
+
+
+function handleWaiting() {
+    gIsVideoBuffering = true;
+}
+
+function handlePlaying() {
+    gIsVideoBuffering = false;
+}
+
+function attachVideoEventListeners(elVideo) {
+    elVideo.addEventListener('waiting', handleWaiting);
+    elVideo.addEventListener('playing', handlePlaying);
+}
+
+// Todo: This code is for changes in the video element without reloading the page. Check if this is needed
+// const observer = new MutationObserver((mutations) => {
+//     mutations.forEach((mutation) => {
+//         if (mutation.type === 'childList') {
+//             // Check if a new video element has been added
+//             const elNewVideo = document.querySelector('#movie_player > div.html5-video-container > video');
+//             if (elNewVideo && elNewVideo !== gElVideo) {
+//                 // Remove existing listeners if any
+//                 elNewVideo.removeEventListener('waiting', handleWaiting);
+//                 elNewVideo.removeEventListener('playing', handlePlaying);
+
+//                 // Attach new listeners
+//                 attachVideoEventListeners(elNewVideo);
+
+//                 // Update gElVideo to the new video element
+//                 gElVideo = elNewVideo;
+//             }
+//         }
+//     });
+// });
+
+// // Start observing the document for changes
+// observer.observe(document.body, { childList: true, subtree: true });
+// Todo
 
 
 function injectedFunction({
@@ -103,10 +154,10 @@ function injectedFunction({
      * @returns {boolean} - The result of the evaluation.
      */
     function evaluateSimpleExpression(expr, title) {
-        const orTerms = expr.split('||').map(term => term.trim())
+        const orTerms = expr.split(/\|\||OR/).map(term => term.trim())
 
         return orTerms.some(orTerm => {
-            const andTerms = orTerm.split('&&').map(term => term.trim())
+            const andTerms = orTerm.split(/&&|AND/).map(term => term.trim())
             return andTerms.every(andTerm => {
                 if (andTerm === 'TRUE' || andTerm === '-FALSE') return true
                 if (andTerm === 'FALSE' || andTerm === '-TRUE') return false
@@ -385,7 +436,7 @@ function injectedFunction({
             execute(pageIdx, direction) {
                 if (!_peakPercentages) setHeatPercentages()
                 if (!_peakPercentages) return console.log('No matches found')
-                const { videoDuration, formattedTotalTime, currTime: prevSkippedTime } = getTimeFromVideo()
+                const { videoDuration, formattedTotalTime, currTime: prevSkippedTime, elVideo } = getTimeFromVideo()
 
                 /**
                 *! Problems while going backwards, get stuck on the last peak. for now its disabled
@@ -395,20 +446,35 @@ function injectedFunction({
                     let nextPageIdx
                     if (direction === 1) {
                         nextPageIdx = _peakPercentages.findIndex(peakPercent => +peakPercent / 100 * videoDuration > prevSkippedTime)
+                        if (nextPageIdx && nextPageIdx !== -1) {
+                            // console.log('\n\n****************************************');
+                            // console.log('nextPageIdx:', nextPageIdx)
+                            // console.log('pageIdx:', pageIdx)
+                            // console.log('contentPageIdx:', contentPageIdx)
+                            // console.log('gIsVideoBuffering:', gIsVideoBuffering)
+                            // console.log('****************************************\n\n');
+                            //* If we're moving from current peak to next peak (diff of 1)
+                            //* AND we're currently at the same peak (pageIdx matches contentPageIdx)
+                            //* AND video is buffering or paused, skip to next peak
+                            //*** Otherwise the video will not skip to the next peak ***//
+                            if (gIsVideoBuffering && pageIdx === nextPageIdx - 1) {
+                                nextPageIdx++
+                            }
+                            pageIdx = nextPageIdx
+                        }
                     } else if (direction === -1) {
                         // nextPageIdx = _peakPercentages.findLastIndex(peakPercent => +peakPercent / 100 * videoDuration < prevSkippedTime)
                     }
-                    if (nextPageIdx && nextPageIdx !== pageIdx && nextPageIdx !== -1) {
-                        pageIdx = nextPageIdx
-                    }
+
+
                 }
 
-
                 pageIdx = loopIdx(pageIdx, _peakPercentages.length)
+
                 contentPageIdx = pageIdx
-        
+
                 const percent = _peakPercentages[pageIdx]
-                skipToPercent(percent)
+                skipToPercent(+percent + 0.00001)
                 const calculatedTimeInSeconds = videoDuration * percent / 100
                 const formattedTime = getFormattedTime(calculatedTimeInSeconds)
                 chrome.runtime.sendMessage({ type: 'setPageIdx', pageIdx, time: formattedTime, totalTime: formattedTotalTime, percent })
@@ -423,7 +489,7 @@ function injectedFunction({
         const percent = currTime / videoDuration * 100
         const formattedCurrTime = getFormattedTime(currTime)
         const formattedTotalTime = getFormattedTime(videoDuration)
-        return { formattedCurrTime, formattedTotalTime, percent, videoDuration, currTime }
+        return { formattedCurrTime, formattedTotalTime, percent, videoDuration, currTime, elVideo }
     }
 
     function init() {
