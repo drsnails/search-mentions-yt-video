@@ -170,6 +170,7 @@ function injectedFunction({
             })
         })
     }
+    
 
     function evaluateTerm(term, title) {
         let regexFlag = 'i'
