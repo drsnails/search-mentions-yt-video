@@ -25,11 +25,13 @@ chrome.runtime.onMessage.addListener(({ type, command, pageIdx, page, searchTerm
     }
 });
 
+const forwardKeyCodes = ['KeyX', 'Period']
+const backwardKeyCodes = ['KeyZ', 'Comma']
 document.addEventListener('keydown', (ev) => {
     if (ev.altKey) {
-        if (ev.code === 'KeyX') {
+        if (forwardKeyCodes.includes(ev.code)) {
             chrome.runtime.sendMessage({ type: 'keybind', altKey: ev.altKey, shiftKey: ev.shiftKey, key: 'x' });
-        } else if (ev.code === 'KeyZ') {
+        } else if (backwardKeyCodes.includes(ev.code)) {
             chrome.runtime.sendMessage({ type: 'keybind', altKey: ev.altKey, shiftKey: ev.shiftKey, key: 'z' });
         }
     }
@@ -61,7 +63,6 @@ function attachVideoEventListeners(elVideo) {
     elVideo.addEventListener('waiting', handleWaiting);
     elVideo.addEventListener('playing', handlePlaying);
     elVideo.addEventListener('play', () => {
-        // alert('play in main.js')
         chrome.runtime.sendMessage({ type: 'play' });
     });
     elVideo.addEventListener('pause', () => {
@@ -506,9 +507,9 @@ function injectedFunction({
         if (!pathData) return
         const elVideo = document.querySelector(VIDEO_SELECTOR)
         const videoDuration = getFormattedTime(+elVideo.duration)
-        sendTimeData()
         chrome.runtime.sendMessage({ type: elVideo.paused ? 'pause' : 'play' })
         chrome.runtime.sendMessage({ type: 'heatmap-path', path: pathData, totalTime: videoDuration });
+        sendTimeData()
     }
 
     //* Execute the main function

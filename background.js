@@ -35,14 +35,15 @@ function handleCustomKeybind(command) {
     });
 }
 
-
 // Listen for Alt+Shift+X and Alt+Shift+Z
+const forwardKeys = ['x', '.']
+const backwardKeys = ['z', ',']
 chrome.runtime.onMessage.addListener(msg => {
     if (msg.type === 'keybind') {
-        if (msg.key === 'x' && msg.altKey) {
-            handleCustomKeybind(msg.shiftKey ? 'increment-page-from-time' : 'increment-page');
-        } else if (msg.key === 'z' && msg.altKey) {
-            handleCustomKeybind(msg.shiftKey ? 'decrement-page-from-time' : 'decrement-page');
+        if (forwardKeys.includes(msg.key) && msg.altKey) {
+            handleCustomKeybind(!msg.shiftKey ? 'increment-page-from-time' : 'increment-page');
+        } else if (backwardKeys.includes(msg.key) && msg.altKey) {
+            handleCustomKeybind(!msg.shiftKey ? 'decrement-page-from-time' : 'decrement-page');
         }
     }
 });

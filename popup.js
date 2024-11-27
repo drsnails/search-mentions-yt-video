@@ -12,10 +12,10 @@ var gElPrevBtn
 var gElNextBtn
 var gElBackBtn
 var gElPageResult
-var gElCurrentTime
-var gElTotalTime
-var gElCursorShadow
+var gElCurrentTimes = []
+var gElTotalTimes = []
 
+var gElCursorShadow
 let videoTimeInterval;
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -35,7 +35,7 @@ function onInit() {
         switch (type) {
             case 'search':
                 showPagination();
-                gElTotalTime.innerText = totalTime;
+                // gElTotalTime.innerText = totalTime;
                 break;
             case 'setPageIdx':
                 gPageIdx = pageIdx;
@@ -46,6 +46,7 @@ function onInit() {
                 setPathInSvg(path);
                 break;
             case 'change-time':
+                console.log('Time changed');
                 renderTime(time, totalTime, percent);
                 break;
             case 'no-matches':
@@ -56,9 +57,11 @@ function onInit() {
                 if (command.startsWith('decrement-page')) onDecrementPage({}, command);
                 break;
             case 'play':
+                startVideoTimeInterval()
                 setPlayPauseBtn({ isPlaying: true })
                 break;
             case 'pause':
+                stopVideoTimeInterval()
                 setPlayPauseBtn({ isPlaying: false })
                 break;
             default:
@@ -68,8 +71,8 @@ function onInit() {
 }
 
 function renderTime(time, totalTime, percent) {
-    gElCurrentTime.innerText = time
-    totalTime && (gElTotalTime.innerText = totalTime)
+    time && gElCurrentTimes.forEach(el => el.innerText = time)
+    totalTime && gElTotalTimes.forEach(el => el.innerText = totalTime)
     percent && insertRedLine(window.innerWidth * (+percent / 100) - 0.5)
 }
 
@@ -85,9 +88,9 @@ function setGlobalElements() {
     gElNextBtn = elPageContainer.querySelector('.next-btn')
     gElBackBtn = elPageContainer.querySelector('.back-btn')
     gElPageResult = elPageContainer.querySelector('.page-result')
-    gElCurrentTime = elPageContainer.querySelector('.current-time')
-    gElTotalTime = elPageContainer.querySelector('.total-time')
 
+    gElCurrentTimes = [...document.querySelectorAll('.current-time')]
+    gElTotalTimes = [...document.querySelectorAll('.total-time')]
 }
 
 
@@ -145,6 +148,11 @@ function startVideoTimeInterval() {
     }, 500);
 }
 
+function stopVideoTimeInterval() {
+    clearInterval(videoTimeInterval);
+    videoTimeInterval = null;
+}
+
 async function onSearch(ev) {
     ev.preventDefault()
     const elSrcBtn = ev.target.querySelector('.search-btn')
@@ -165,22 +173,26 @@ async function onSearch(ev) {
         })
 
     } catch (error) {
-        console.log('error:', error)
+        console.log('Popup onSearch error:', error)
     }
 }
 
 async function onIncrementPage(ev, command = 'increment-page-from-time') {
     const newPageIdx = gPageIdx + 1
-    let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-    chrome.tabs.sendMessage(tab.id, {
-        type: 'command',
-        command,
-        pageIdx: newPageIdx,
-        page: gPage,
-        direction: 1,
-        searchTerm: gElSearchInput?.value.trim(),
-        isSkipToClosest: command.endsWith('from-time')
-    });
+    try {
+        let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+        chrome.tabs.sendMessage(tab.id, {
+            type: 'command',
+            command,
+            pageIdx: newPageIdx,
+            page: gPage,
+            direction: 1,
+            searchTerm: gElSearchInput?.value.trim(),
+            isSkipToClosest: command.endsWith('from-time')
+        });
+    } catch (error) {
+        console.log('Popup onIncrementPage error:', error)
+    }
     // onChangePageIdx(1)
 }
 
@@ -188,16 +200,20 @@ async function onIncrementPage(ev, command = 'increment-page-from-time') {
 async function onDecrementPage(ev, command = 'decrement-page-from-time') {
 
     const newPageIdx = gPageIdx - 1
-    let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-    chrome.tabs.sendMessage(tab.id, {
-        type: 'command',
-        command,
-        pageIdx: newPageIdx,
-        page: gPage,
-        direction: -1,
-        searchTerm: gElSearchInput?.value.trim(),
-        isSkipToClosest: command.endsWith('from-time')
-    });
+    try {
+        let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+        chrome.tabs.sendMessage(tab.id, {
+            type: 'command',
+            command,
+            pageIdx: newPageIdx,
+            page: gPage,
+            direction: -1,
+            searchTerm: gElSearchInput?.value.trim(),
+            isSkipToClosest: command.endsWith('from-time')
+        });
+    } catch (error) {
+        console.log('Popup onDecrementPage error:', error)
+    }
     // onChangePageIdx(-1)
 }
 
@@ -229,8 +245,13 @@ function setPathInSvg(path) {
 
 
 async function executeCurrentContentScript(argsObj = {}) {
-    let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-    executeContentScript(tab, argsObj)
+
+    try {
+        let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+        executeContentScript(tab, argsObj)
+    } catch (error) {
+        console.log('Popup executeCurrentContentScript error:', error)
+    }
 }
 
 async function executeContentScript(tab, argsObj = {}) {
@@ -391,9 +412,4 @@ function _saveToStorage(key, data) {
 function _loadFromStorage(key) {
     const data = localStorage.getItem(key)
     return JSON.parse(data)
-}
-
-function stopVideoTimeInterval() {
-    clearInterval(videoTimeInterval);
-    videoTimeInterval = null;
 }
