@@ -2,6 +2,7 @@
 
 var gPage = 'transcript'
 var gIsSvgMouseOver = false
+var gIsPlaying = false
 var gHeatMapPath
 var gElSearchBtn
 var gElForm
@@ -55,10 +56,10 @@ function onInit() {
                 if (command.startsWith('decrement-page')) onDecrementPage({}, command);
                 break;
             case 'play':
-                startVideoTimeInterval()
+                setPlayPauseBtn({ isPlaying: true })
                 break;
             case 'pause':
-                stopVideoTimeInterval()
+                setPlayPauseBtn({ isPlaying: false })
                 break;
             default:
                 console.log('Unknown message type:', type);
@@ -69,7 +70,7 @@ function onInit() {
 function renderTime(time, totalTime, percent) {
     gElCurrentTime.innerText = time
     totalTime && (gElTotalTime.innerText = totalTime)
-    percent && insertRedLine(window.innerWidth * (+percent / 100))
+    percent && insertRedLine(window.innerWidth * (+percent / 100) - 0.5)
 }
 
 
@@ -93,12 +94,23 @@ function setGlobalElements() {
 function addEventListeners() {
     addPageEventListeners()
     document.querySelector('.navigation').addEventListener('click', onChangePage)
+    document.querySelector('.play-pause-btn-container').addEventListener('click', onTogglePlay)
     document.addEventListener('keydown', onKeyDown)
-    const elSvg = document.querySelector('svg')
+    const elSvg = document.querySelector('.svg-container')
     elSvg.addEventListener('click', onSvgHeatmapClick)
     elSvg.addEventListener('mouseenter', onSvgHeatmapMouseEnter)
     elSvg.addEventListener('mouseleave', onSvgHeatmapMouseLeave)
     elSvg.addEventListener('mousemove', onSvgHeatmapMouseMove)
+}
+
+
+function onTogglePlay(ev) {
+    executeCurrentContentScript({ funcName: 'togglePlay' })
+}
+
+function setPlayPauseBtn({ elBtn, isPlaying }) {
+    if (!elBtn) elBtn = document.querySelector('.play-pause-btn')
+    elBtn.classList.toggle('paused', isPlaying)
 }
 
 function onSvgHeatmapMouseEnter() {
@@ -109,7 +121,7 @@ function onSvgHeatmapMouseEnter() {
 
 function onSvgHeatmapMouseMove(ev) {
     if (!gIsSvgMouseOver) return
-    gElCursorShadow && (gElCursorShadow.style.left = `${ev.x}px`)
+    gElCursorShadow && (gElCursorShadow.style.left = `${ev.x - 0.5}px`)
 }
 
 function onSvgHeatmapMouseLeave() {
@@ -236,6 +248,9 @@ const onInputSearch = _debounce((ev) => {
 
 function onKeyDown(ev) {
     if (document.activeElement.tagName === 'INPUT') return
+    if (document.activeElement.tagName === 'BUTTON') {
+        document.activeElement.blur()
+    }
     let seconds = 5
     if (ev.shiftKey) seconds = 30
 
@@ -362,17 +377,11 @@ function _debounce(func, wait) {
 }
 
 function insertRedLine(x, color = 'red') {
-    const existingLines = document.querySelectorAll('.red-line')
-    existingLines.forEach(line => line.remove())
-    const line = document.createElement('div')
-    line.classList.add('red-line')
-    line.style.position = 'absolute'
-    line.style.left = `${x}px`
-    line.style.bottom = '0'
-    line.style.width = '1px'
-    line.style.height = '15%'
-    line.style.backgroundColor = color
-    document.body.appendChild(line)
+    const elLine = document.querySelector('.cursor.red-line')
+    if (!elLine) return
+    elLine.style.display = 'block'
+    elLine.style.left = `${x}px`
+    elLine.style.backgroundColor = color
 }
 
 function _saveToStorage(key, data) {

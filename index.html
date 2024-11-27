@@ -43,6 +43,7 @@
         <section data-page="heatmap" class="heatmap-search">
             <form>
                 <section class="pagination">
+                    <section class="play-pause-btn-container"><button type="button" class="play-pause-btn"></button></section>
                     <section class="transcript-time">
                         <span class="current-time">00:00</span>/
                         <span class="total-time">1:00:00</span>
@@ -58,19 +59,22 @@
             </form>
         </section>
     </section>
-    <svg class="yt-heat-map-svg" height="100%" preserveAspectRatio="none" version="1.1" viewBox="0 0 1000 100"
-        width="100%" style="height: 15%">
-        <defs>
-            <clipPath id="3">
-                <path class="yt-heat-map-path" d="" fill="white"></path>
-            </clipPath>
-        </defs>
-        <rect class="yt-heat-map-graph" clip-path="url(#3)" fill="white" fill-opacity="0.4" height="100%" width="100%"
-            x="0" y="0"></rect>
-        <rect class="yt-heat-map-hover" clip-path="url(#3)" fill="white" fill-opacity="0.7" height="100%" width="100%"
-            x="0" y="0"></rect>
-    </svg>
+    <section class="svg-container">
+        <svg class="yt-heat-map-svg" height="100%" preserveAspectRatio="none" version="1.1" viewBox="0 0 1000 100"
+            width="100%" style="height: 15%">
+            <defs>
+                <clipPath id="3">
+                    <path class="yt-heat-map-path" d="" fill="white"></path>
+                </clipPath>
+            </defs>
+            <rect class="yt-heat-map-graph" clip-path="url(#3)" fill="white" fill-opacity="0.4" height="100%"
+                width="100%" x="0" y="0"></rect>
+            <rect class="yt-heat-map-hover" clip-path="url(#3)" fill="white" fill-opacity="0.7" height="100%"
+                width="100%" x="0" y="0"></rect>
+        </svg>
+    </section>
     <div class="cursor-shadow"></div>
+    <div class="red-line cursor"></div>
     <script src="main.js"></script>
     <script src="popup.js"></script>
 </body>

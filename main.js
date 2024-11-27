@@ -60,6 +60,13 @@ function handlePlaying() {
 function attachVideoEventListeners(elVideo) {
     elVideo.addEventListener('waiting', handleWaiting);
     elVideo.addEventListener('playing', handlePlaying);
+    elVideo.addEventListener('play', () => {
+        // alert('play in main.js')
+        chrome.runtime.sendMessage({ type: 'play' });
+    });
+    elVideo.addEventListener('pause', () => {
+        chrome.runtime.sendMessage({ type: 'pause' });
+    });
 }
 
 // Todo: This code is for changes in the video element without reloading the page. Check if this is needed
@@ -170,7 +177,7 @@ function injectedFunction({
             })
         })
     }
-    
+
 
     function evaluateTerm(term, title) {
         let regexFlag = 'i'
@@ -500,6 +507,7 @@ function injectedFunction({
         const elVideo = document.querySelector(VIDEO_SELECTOR)
         const videoDuration = getFormattedTime(+elVideo.duration)
         sendTimeData()
+        chrome.runtime.sendMessage({ type: elVideo.paused ? 'pause' : 'play' })
         chrome.runtime.sendMessage({ type: 'heatmap-path', path: pathData, totalTime: videoDuration });
     }
 

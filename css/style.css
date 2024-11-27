@@ -23,7 +23,7 @@ button {
 
 
 .btn {
-    padding: 0.3rem 0.5rem;
+    padding: 0.2rem 0.4rem;
     background-color: white;
     color: black;
     border: 2px solid white;
@@ -39,7 +39,7 @@ button {
     background-color: var(--mainBgColor);
     color: white;
     height: 280px;
-    
+
     width: 300px;
     /* display: flex;
     flex-direction: column;
@@ -55,11 +55,13 @@ nav {
     justify-content: center;
     gap: 10px;
     margin-bottom: 0.6em;
+
     .nav-btn {
         background: none;
         border: none;
         color: white;
         font-size: 0.5rem;
+
         &.active {
             text-decoration-line: underline;
             font-weight: 700;
@@ -72,7 +74,8 @@ nav {
     display: none;
 }
 
-.transcript-search, .heatmap-search {
+.transcript-search,
+.heatmap-search {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -83,11 +86,14 @@ nav {
 }
 
 form {
-    gap: 0.5em;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
+    .transcript-search & {
+
+        /* gap: 0.5em; */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+    }
 
     .input-wrapper {
         --clearBtnSize: 15px;
@@ -97,7 +103,7 @@ form {
         transition: var(--extendTime) transform;
 
         .search-input {
-            
+
             padding: 0.3rem;
             padding-inline: var(--clearBtnSize) 0;
             border: none;
@@ -155,7 +161,7 @@ form {
 
     .search-btn,
     .back-btn {
-        min-width: 90px;
+        min-width: 80px;
         transition-duration: .2s;
         transition-property: background-color, color, border-color;
     }
@@ -164,6 +170,7 @@ form {
         background-color: var(--mainBgColor);
         color: white;
     }
+
     .back-btn {
         background-color: var(--mainBgColor);
         border: none;
@@ -172,23 +179,31 @@ form {
 
     .back-btn:hover {
         background-color: white;
-        color: var(--mainBgColor); 
+        color: var(--mainBgColor);
     }
+
     .search-btn {
         margin-top: 2em;
     }
+}
+
+
+
+.search-form button:focus {
+    outline: none;
 }
 
 .pagination {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 0.4rem;
 
     .pagination-btns {
         display: flex;
         align-items: center;
         gap: 0.4rem;
-        margin-top: 0.4rem;
+        /* margin-top: 0.4rem; */
 
         >.btn {
             position: relative;
@@ -240,6 +255,47 @@ form {
     }
 }
 
+.pagination>section {
+    /* padding-block: 0.4rem; */
+    /* margin-top: 1rem; */
+}
+
+.play-pause-btn-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-block: 0.4rem;
+    position: relative;
+    /* margin-bottom: 0.4rem; */
+}
+
+.play-pause-btn {
+    position: absolute;
+    --height: 15px;
+    --width: calc(var(--height) * 0.8);
+    border: 0;
+    
+    background: transparent;
+    box-sizing: border-box;
+    width: 0;
+    height: var(--height);
+    translate: calc(var(--width) / 2) 0;
+    /* border-color: transparent transparent transparent white; */
+    border-color: transparent;
+    border-left-color: white;
+    transition: 0.15s all ease;
+    cursor: pointer;
+    /* play state */
+    border-style: solid;
+    border-width: calc(var(--height) / 2) 0px calc(var(--height) / 2) var(--width);
+
+    &.paused {
+        border-style: double;
+        border-width: 0px 0px 0px var(--width);
+    }
+
+}
+
 .hide {
     display: none;
 }
@@ -252,6 +308,12 @@ form {
 
 
 /** SVG */
+.svg-container {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
 .yt-heat-map-svg {
     position: fixed;
     bottom: 0;
@@ -290,4 +352,16 @@ form {
     100% {
         transform: translateX(0);
     }
+}
+
+
+
+.red-line {
+    position: absolute;
+    bottom: 0;
+    width: 1px;
+    height: 15%;
+    background-color: red;
+    display: none;
+    /* Hidden by default */
 }
