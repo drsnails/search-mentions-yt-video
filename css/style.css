@@ -164,23 +164,16 @@ form {
         min-width: 80px;
         transition-duration: .2s;
         transition-property: background-color, color, border-color;
-    }
-
-    .search-btn:hover {
-        background-color: var(--mainBgColor);
-        color: white;
-    }
-
-    .back-btn {
         background-color: var(--mainBgColor);
         border: none;
         color: white;
+
+        &:hover {
+            background-color: white;
+            color: var(--mainBgColor);
+        }
     }
 
-    .back-btn:hover {
-        background-color: white;
-        color: var(--mainBgColor);
-    }
 
     .search-btn {
         margin-top: 2em;
@@ -329,7 +322,7 @@ form {
     width: 1px;
     height: 15%;
     z-index: 1000;
-    background-color: rgba(255, 0, 0, 0.550);
+    background-color: rgb(175 25 25 / 80%);
 }
 
 @keyframes shake {

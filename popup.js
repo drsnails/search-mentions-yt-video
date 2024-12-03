@@ -16,7 +16,7 @@ var gElCurrentTimes = []
 var gElTotalTimes = []
 
 var gElCursorShadow
-let videoTimeInterval;
+let gVideoTimeInterval;
 
 window.addEventListener('DOMContentLoaded', () => {
     onInit()
@@ -142,15 +142,15 @@ function addPageEventListeners() {
 
 
 function startVideoTimeInterval() {
-    if (videoTimeInterval) return;
-    videoTimeInterval = setInterval(async () => {
+    if (gVideoTimeInterval) return;
+    gVideoTimeInterval = setInterval(async () => {
         executeCurrentContentScript({ funcName: 'onTimeInterval' })
     }, 500);
 }
 
 function stopVideoTimeInterval() {
-    clearInterval(videoTimeInterval);
-    videoTimeInterval = null;
+    clearInterval(gVideoTimeInterval);
+    gVideoTimeInterval = null;
 }
 
 async function onSearch(ev) {
