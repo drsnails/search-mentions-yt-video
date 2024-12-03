@@ -248,10 +248,6 @@ form {
     }
 }
 
-.pagination>section {
-    /* padding-block: 0.4rem; */
-    /* margin-top: 1rem; */
-}
 
 .play-pause-btn-container {
     display: flex;
