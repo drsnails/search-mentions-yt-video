@@ -255,6 +255,9 @@ form {
     justify-content: center;
     padding-block: 0.4rem;
     position: relative;
+    width: 0.65em;
+    cursor: pointer;
+
     /* margin-bottom: 0.4rem; */
 }
 
@@ -263,7 +266,8 @@ form {
     --height: 15px;
     --width: calc(var(--height) * 0.8);
     border: 0;
-    
+    cursor: default;
+    pointer-events: none;
     background: transparent;
     box-sizing: border-box;
     width: 0;
@@ -273,7 +277,6 @@ form {
     border-color: transparent;
     border-left-color: white;
     transition: 0.15s all ease;
-    cursor: pointer;
     /* play state */
     border-style: solid;
     border-width: calc(var(--height) / 2) 0px calc(var(--height) / 2) var(--width);
