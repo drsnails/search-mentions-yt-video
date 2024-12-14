@@ -355,6 +355,7 @@ form {
         right: 0;
         border-radius: 100% 0 0 100%;
     }
+    
     &.db-left {
         left: 0;
         border-radius: 0 100% 100% 0;
