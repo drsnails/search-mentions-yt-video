@@ -104,8 +104,26 @@ function addEventListeners() {
     elSvg.addEventListener('mouseenter', onSvgHeatmapMouseEnter)
     elSvg.addEventListener('mouseleave', onSvgHeatmapMouseLeave)
     elSvg.addEventListener('mousemove', onSvgHeatmapMouseMove)
+
+
+    const elDbClicks = document.querySelectorAll('.db-click')
+    elDbClicks.forEach(el => el.addEventListener('dblclick', handleDbClick))
+    // elDbClicks[0].addEventListener('click', handleDbClick)
+    // elDbClicks[1].addEventListener('click', handleDbClick)
+
+
 }
 
+function handleDbClick(ev) {
+    ev.preventDefault()
+    let timeSkip = 5
+    if (this.classList.contains('db-left')) {
+        timeSkip *= -1
+    }
+    _animateCSS(this,'light-up-animation')
+    executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: timeSkip })
+
+}
 
 function onTogglePlay(ev) {
     executeCurrentContentScript({ funcName: 'togglePlay' })
@@ -373,6 +391,7 @@ function formatSearchTerm(str) {
 }
 
 function _animateCSS(el, animationName, isRemoveClass = true) {
+    el.classList.remove(animationName)
     return new Promise((resolve, reject) => {
         el.classList.add(animationName)
 

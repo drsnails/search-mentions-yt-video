@@ -6,6 +6,8 @@
     --gapSize: 7px;
     --borderRadius: 3px;
     --mainBgColor: #1c1c1c;
+
+    --red-line-height: 15%;
 }
 
 html {
@@ -302,16 +304,27 @@ form {
 /** SVG */
 .svg-container {
     position: fixed;
+    z-index: 100;
     bottom: 0;
-    width: 100%;
+    width: 80%;
     cursor: none;
 }
 
 .yt-heat-map-svg {
     position: fixed;
     bottom: 0;
+    z-index: 100;
 }
 
+.red-line {
+    position: absolute;
+    bottom: 0;
+    width: 1px;
+    height: var(--red-line-height);
+    background-color: red;
+    display: none;
+    z-index: 100;
+}
 
 .cursor-shadow {
     position: fixed;
@@ -320,9 +333,48 @@ form {
     pointer-events: none;
     left: 50%;
     width: 1px;
-    height: 15%;
-    z-index: 1000;
+    height: calc(var(--red-line-height) * 1.25);
+    z-index: 150;
     background-color: rgb(175 25 25 / 80%);
+}
+
+
+.db-click {
+    position: fixed;
+    inset-block: 0;
+    z-index: 10;
+    width: 20vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    background-color: rgba(255, 255, 255, 0.258);
+
+    &.db-right {
+        right: 0;
+        border-radius: 100% 0 0 100%;
+    }
+    &.db-left {
+        left: 0;
+        border-radius: 0 100% 100% 0;
+
+    }
+
+    > span {
+        font-size: 0.5em;
+        color: white;
+        background-color: black;
+        padding: 0.5em;
+        border-radius: 50%;
+        &::selection {
+            background-color: transparent;
+        }
+    }
+}
+
+.light-up-animation {
+    animation: light-up 0.65s ease-in;
 }
 
 @keyframes shake {
@@ -347,14 +399,13 @@ form {
     }
 }
 
+@keyframes light-up {
+    0% {
+        opacity: 1;
+    }
 
-
-.red-line {
-    position: absolute;
-    bottom: 0;
-    width: 1px;
-    height: 15%;
-    background-color: red;
-    display: none;
-    /* Hidden by default */
+    100% {
+        opacity: 0;
+    }
 }
+

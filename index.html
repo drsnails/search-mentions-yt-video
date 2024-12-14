@@ -1,82 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE" ="edge" />
+		<title>youtubeAddToQueue</title>
+		<link rel=stylesheet href=css/style.css>
+	</head>
 
-<head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE"="edge" />
-    <title>youtubeAddToQueue</title>
-    <link rel=stylesheet href=css/style.css>
-</head>
+	<body>
+		<section class="main">
+			<nav class="navigation">
+				<button data-page="transcript" class="nav-btn active">Transcript</button>
+				<button data-page="heatmap" class="nav-btn">Heatmap</button>
+			</nav>
+			<section data-page="transcript" class="transcript-search active">
+				<form>
+					<section class="search-input-container">
+						<span class="input-wrapper">
+							<input
+								class="search-input"
+								type="search"
+								placeholder="Search something"
+							/>
+						</span>
+					</section>
+					<section class="pagination hide">
+						<section class="transcript-time">
+							<span class="current-time"></span>/
+							<span class="total-time"></span>
+						</section>
+						<section class="pagination-btns">
+							<button type="button" class="btn prev-btn">Prev</button>
+							<span class="page-result">1</span>
+							<button type="button" class="btn next-btn">Next</button>
+						</section>
+						<span class="term-title"><span></span></span>
+					</section>
+					<section class="btns-container">
+						<button type="submit" class="btn search-btn">Search</button>
+						<button type="button" class="btn back-btn hide">Back</button>
+					</section>
+				</form>
+			</section>
 
-<body>
-    <section class="main">
-        <nav class="navigation">
-            <button data-page="transcript" class="nav-btn active">Transcript</button>
-            <button data-page="heatmap" class="nav-btn">Heatmap</button>
-        </nav>
-        <section data-page="transcript" class="transcript-search active">
-            <form>
-                <section class="search-input-container">
-                    <span class="input-wrapper">
-                        <input class="search-input" type="search" placeholder="Search something" />
-                    </span>
-                </section>
-                <section class="pagination hide">
-                    <section class="transcript-time">
-                        <span class="current-time"></span>/
-                        <span class="total-time"></span>
-                    </section>
-                    <section class="pagination-btns">
-                        <button type="button" class="btn prev-btn">Prev</button>
-                        <span class="page-result">1</span>
-                        <button type="button" class="btn next-btn">Next</button>
-                    </section>
-                    <span class="term-title"><span></span></span>
-                </section>
-                <section class="btns-container">
-                    <button type="submit" class="btn search-btn">Search</button>
-                    <button type="button" class="btn back-btn hide">Back</button>
-                </section>
-            </form>
-        </section>
+			<section data-page="heatmap" class="heatmap-search">
+				<form>
+					<section class="pagination">
+						<section class="play-pause-btn-container">
+							<button type="button" class="play-pause-btn"></button>
+						</section>
+						<section class="transcript-time">
+							<span class="current-time">00:00</span>/
+							<span class="total-time">1:00:00</span>
+						</section>
+						<section class="pagination-btns">
+							<button type="button" class="btn prev-btn">Prev</button>
+							<span class="page-result">1</span>
+							<button type="button" class="btn next-btn">Next</button>
+						</section>
+						<span class="term-title"><span></span></span>
+					</section>
+				</form>
+			</section>
+		</section>
+		<div class="db-click db-left"><span>-5</span></div>
+		<div class="db-click db-right"><span>+5</span></div>
+		<section class="svg-container">
+			<svg
+				class="yt-heat-map-svg"
+				height="100%"
+				preserveAspectRatio="none"
+				version="1.1"
+				viewBox="0 0 1000 100"
+				width="100%"
+				style="height: 15%"
+			>
+				<defs>
+					<clipPath id="3">
+						<path class="yt-heat-map-path" d="" fill="white"></path>
+					</clipPath>
+				</defs>
+				<rect
+					class="yt-heat-map-graph"
+					clip-path="url(#3)"
+					fill="white"
+					fill-opacity="0.4"
+					height="100%"
+					width="100%"
+					x="0"
+					y="0"
+				></rect>
+				<rect
+					class="yt-heat-map-hover"
+					clip-path="url(#3)"
+					fill="white"
+					fill-opacity="0.7"
+					height="100%"
+					width="100%"
+					x="0"
+					y="0"
+				></rect>
+			</svg>
+		</section>
+		<div class="cursor-shadow"></div>
+		<div class="red-line cursor"></div>
 
-        <section data-page="heatmap" class="heatmap-search">
-            <form>
-                <section class="pagination">
-                    <section class="play-pause-btn-container"><button type="button" class="play-pause-btn"></button></section>
-                    <section class="transcript-time">
-                        <span class="current-time">00:00</span>/
-                        <span class="total-time">1:00:00</span>
-                    </section>
-                    <section class="pagination-btns">
-                        <button type="button" class="btn prev-btn">Prev</button>
-                        <span class="page-result">1</span>
-                        <button type="button" class="btn next-btn">Next</button>
-                    </section>
-                    <span class="term-title"><span></span></span>
-                </section>
-
-            </form>
-        </section>
-    </section>
-    <section class="svg-container">
-        <svg class="yt-heat-map-svg" height="100%" preserveAspectRatio="none" version="1.1" viewBox="0 0 1000 100"
-            width="100%" style="height: 15%">
-            <defs>
-                <clipPath id="3">
-                    <path class="yt-heat-map-path" d="" fill="white"></path>
-                </clipPath>
-            </defs>
-            <rect class="yt-heat-map-graph" clip-path="url(#3)" fill="white" fill-opacity="0.4" height="100%"
-                width="100%" x="0" y="0"></rect>
-            <rect class="yt-heat-map-hover" clip-path="url(#3)" fill="white" fill-opacity="0.7" height="100%"
-                width="100%" x="0" y="0"></rect>
-        </svg>
-    </section>
-    <div class="cursor-shadow"></div>
-    <div class="red-line cursor"></div>
-    <script src="main.js"></script>
-    <script src="popup.js"></script>
-</body>
-
+		<script src="main.js"></script>
+		<script src="popup.js"></script>
+	</body>
 </html>
