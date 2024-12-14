@@ -304,6 +304,7 @@ form {
     position: fixed;
     bottom: 0;
     width: 100%;
+    cursor: none;
 }
 
 .yt-heat-map-svg {
