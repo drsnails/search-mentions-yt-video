@@ -112,14 +112,15 @@ function addEventListeners() {
 
 function handleDbClick() {
     let prevClickTime = 0
-    return function (ev) {
+    return (ev) => {
         const now = Date.now()
         if ((now - prevClickTime) <= 400) {
             let timeSkip = 5
-            if (this.classList.contains('db-left')) {
+            if (ev.target.classList.contains('db-left')) {
                 timeSkip *= -1
             }
-            _animateCSS(this, 'light-up-animation')
+            highlightTimeContainer(ev.target, 5)
+            // _animateCSS(this, 'light-up-animation')
             executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: timeSkip })
         }
         prevClickTime = now
@@ -293,7 +294,6 @@ function onKeyDown(ev) {
     }
     let seconds = 5
     if (ev.shiftKey) seconds = 30
-
     if (ev.key === ' ' || ev.key === 'k') {
         executeCurrentContentScript({ funcName: 'togglePlay' })
     } else if (ev.key === 'ArrowRight') {
@@ -311,10 +311,12 @@ function onKeyDown(ev) {
     }
 }
 
-function highlightTimeContainer(side, time = 5) {
-    const elDbc = document.querySelector(`.db-${side}`)
-    elDbc.querySelector('span > span').innerText = time
-    _animateCSS(elDbc, 'light-up-animation')
+function highlightTimeContainer(elSide, time = 5) {
+    if (typeof elSide === 'string') {
+        elSide = document.querySelector(`.db-${elSide}`)
+    }
+    elSide.querySelector('span > span').innerText = time
+    _animateCSS(elSide, 'light-up-animation')
 }
 
 async function onSvgHeatmapClick(ev) {
