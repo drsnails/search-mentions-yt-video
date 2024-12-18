@@ -107,22 +107,23 @@ function addEventListeners() {
 
 
     const elDbClicks = document.querySelectorAll('.db-click')
-    elDbClicks.forEach(el => el.addEventListener('dblclick', handleDbClick))
-    // elDbClicks[0].addEventListener('click', handleDbClick)
-    // elDbClicks[1].addEventListener('click', handleDbClick)
-
-
+    elDbClicks.forEach(el => el.addEventListener('click', handleDbClick()))
 }
 
-function handleDbClick(ev) {
-    ev.preventDefault()
-    let timeSkip = 5
-    if (this.classList.contains('db-left')) {
-        timeSkip *= -1
+function handleDbClick() {
+    let prevClickTime = 0
+    return function (ev) {
+        const now = Date.now()
+        if ((now - prevClickTime) <= 400) {
+            let timeSkip = 5
+            if (this.classList.contains('db-left')) {
+                timeSkip *= -1
+            }
+            _animateCSS(this, 'light-up-animation')
+            executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: timeSkip })
+        }
+        prevClickTime = now
     }
-    _animateCSS(this,'light-up-animation')
-    executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: timeSkip })
-
 }
 
 function onTogglePlay(ev) {
@@ -296,14 +297,24 @@ function onKeyDown(ev) {
     if (ev.key === ' ' || ev.key === 'k') {
         executeCurrentContentScript({ funcName: 'togglePlay' })
     } else if (ev.key === 'ArrowRight') {
+        highlightTimeContainer('right', 5)
         executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: seconds })
     } else if (ev.key === 'ArrowLeft') {
+        highlightTimeContainer('left', 5)
         executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: -seconds })
     } else if (ev.key.toLowerCase() === 'l') {
+        highlightTimeContainer('right', seconds * 2)
         executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: seconds * 2 })
     } else if (ev.key.toLowerCase() === 'j') {
+        highlightTimeContainer('left', seconds * 2)
         executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: -seconds * 2 })
     }
+}
+
+function highlightTimeContainer(side, time = 5) {
+    const elDbc = document.querySelector(`.db-${side}`)
+    elDbc.querySelector('span > span').innerText = time
+    _animateCSS(elDbc, 'light-up-animation')
 }
 
 async function onSvgHeatmapClick(ev) {
@@ -390,8 +401,17 @@ function formatSearchTerm(str) {
 
 }
 
+/**
+ * Adds an animation class to an element, waits for the animation to end, and optionally removes the class.
+ *
+ * @param {HTMLElement} el - The element to animate.
+ * @param {string} animationName - The name of the animation class to add.
+ * @param {boolean} [isRemoveClass=true] - Whether to remove the animation class after the animation ends.
+ * @returns {Promise<string>} A promise that resolves with 'Animation ended' when the animation ends.
+ */
 function _animateCSS(el, animationName, isRemoveClass = true) {
     el.classList.remove(animationName)
+    el.offsetWidth; // Trigger reflow to restart the animation
     return new Promise((resolve, reject) => {
         el.classList.add(animationName)
 

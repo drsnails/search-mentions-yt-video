@@ -355,27 +355,40 @@ form {
         right: 0;
         border-radius: 100% 0 0 100%;
     }
-    
+
     &.db-left {
         left: 0;
         border-radius: 0 100% 100% 0;
-
     }
 
-    > span {
+    >span {
         font-size: 0.5em;
         color: white;
         background-color: black;
         padding: 0.5em;
         border-radius: 50%;
-        &::selection {
+
+        /* &::selection {
             background-color: transparent;
-        }
+        } */
+
+        /* >span {
+            &&::selection {
+                background-color: transparent;
+            }
+        } */
+    }
+}
+
+.db-click > span, .db-click > span span {
+    pointer-events: none;
+    &::selection {
+        background-color: transparent;
     }
 }
 
 .light-up-animation {
-    animation: light-up 0.65s ease-in;
+    animation: light-up 0.7s ease-in-out;
 }
 
 @keyframes shake {
@@ -402,6 +415,10 @@ form {
 
 @keyframes light-up {
     0% {
+        opacity: 0.65
+    }
+
+    3% {
         opacity: 1;
     }
 
@@ -409,4 +426,3 @@ form {
         opacity: 0;
     }
 }
-
