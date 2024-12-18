@@ -297,10 +297,10 @@ function onKeyDown(ev) {
     if (ev.key === ' ' || ev.key === 'k') {
         executeCurrentContentScript({ funcName: 'togglePlay' })
     } else if (ev.key === 'ArrowRight') {
-        highlightTimeContainer('right', 5)
+        highlightTimeContainer('right', seconds)
         executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: seconds })
     } else if (ev.key === 'ArrowLeft') {
-        highlightTimeContainer('left', 5)
+        highlightTimeContainer('left', seconds)
         executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: -seconds })
     } else if (ev.key.toLowerCase() === 'l') {
         highlightTimeContainer('right', seconds * 2)
