@@ -119,8 +119,7 @@ function handleDbClick() {
             if (ev.target.classList.contains('db-left')) {
                 timeSkip *= -1
             }
-            highlightTimeContainer(ev.target, 5)
-            // _animateCSS(this, 'light-up-animation')
+            highlightTimeContainer(ev.target, Math.abs(timeSkip))
             executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: timeSkip })
         }
         prevClickTime = now
