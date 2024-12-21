@@ -2,6 +2,7 @@
 
 var gPage = 'transcript'
 var gIsSvgMouseOver = false
+var gIsMouseDown = false
 var gIsPlaying = false
 var gHeatMapPath
 var gElSearchBtn
@@ -73,7 +74,9 @@ function onInit() {
 function renderTime(time, totalTime, percent) {
     time && gElCurrentTimes.forEach(el => el.innerText = time)
     totalTime && gElTotalTimes.forEach(el => el.innerText = totalTime)
-    percent && insertRedLine(window.innerWidth * (+percent / 100) - 0.5)
+    if (percent && !gIsMouseDown) {
+        insertRedLine(window.innerWidth * (+percent / 100) - 0.5)
+    }
 }
 
 
@@ -100,10 +103,14 @@ function addEventListeners() {
     document.querySelector('.play-pause-btn-container').addEventListener('click', onTogglePlay)
     document.addEventListener('keydown', onKeyDown)
     const elSvg = document.querySelector('.svg-container')
-    elSvg.addEventListener('click', onSvgHeatmapClick)
+    // elSvg.addEventListener('click', onSvgHeatmapClick)
+    elSvg.addEventListener('mousedown', onSvgHeatmapMouseDown)
+    elSvg.addEventListener('mouseup', onSvgHeatmapMouseUp)
     elSvg.addEventListener('mouseenter', onSvgHeatmapMouseEnter)
     elSvg.addEventListener('mouseleave', onSvgHeatmapMouseLeave)
     elSvg.addEventListener('mousemove', onSvgHeatmapMouseMove)
+    
+
 
 
     const elDbClicks = document.querySelectorAll('.db-click')
@@ -144,10 +151,43 @@ function onSvgHeatmapMouseEnter() {
 function onSvgHeatmapMouseMove(ev) {
     if (!gIsSvgMouseOver) return
     gElCursorShadow && (gElCursorShadow.style.left = `${ev.x - 0.5}px`)
+    if (gIsMouseDown) {
+        onSetNewVideoTime(ev)
+    }
+}
+
+
+function onSvgHeatmapMouseDown(ev) {
+    gIsMouseDown = true
+    gElCursorShadow.classList.add('active')
+    document.querySelector('.cursor.red-line').style.display = `none`
+    onSetNewVideoTime(ev)
+}
+
+function onSvgHeatmapMouseUp(ev) {
+    gIsMouseDown = false
+    gElCursorShadow.classList.remove('active')
+    document.querySelector('.cursor.red-line').style.display = `block`
+    document.querySelector('.cursor.red-line').style.left = `${ev.x - 0.5}px`
+}
+
+function onSetNewVideoTime(ev) {
+    const percent = ev.x / window.innerWidth * 100
+    try {
+        executeCurrentContentScript({ funcName: 'changeTime', percent })
+    } catch (error) {
+        console.log('error:', error)
+    }
+
+}
+
+async function onSvgHeatmapClick(ev) {
+    onSetNewVideoTime(ev)
 }
 
 function onSvgHeatmapMouseLeave() {
     gIsSvgMouseOver = false
+    gIsMouseDown = false
     gElCursorShadow && (gElCursorShadow.style.display = 'none')
 }
 
@@ -291,10 +331,16 @@ function onKeyDown(ev) {
     if (document.activeElement.tagName === 'BUTTON') {
         document.activeElement.blur()
     }
+    let volume = 0.05
     let seconds = 5
     if (ev.shiftKey) seconds = 30
     if (ev.key === ' ' || ev.key === 'k') {
         executeCurrentContentScript({ funcName: 'togglePlay' })
+    } else if (ev.key === 'ArrowUp') {
+        executeCurrentContentScript({ funcName: 'updateAudioVolume', volume })
+    } else if (ev.key === 'ArrowDown') {
+        volume *= -1
+        executeCurrentContentScript({ funcName: 'updateAudioVolume', volume })
     } else if (ev.key === 'ArrowRight') {
         highlightTimeContainer('right', seconds)
         executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: seconds })
@@ -318,15 +364,6 @@ function highlightTimeContainer(elSide, time = 5) {
     _animateCSS(elSide, 'light-up-animation')
 }
 
-async function onSvgHeatmapClick(ev) {
-    const percent = ev.x / window.innerWidth * 100
-    try {
-        executeCurrentContentScript({ funcName: 'changeTime', percent })
-
-    } catch (error) {
-        console.log('error:', error)
-    }
-}
 
 function onChangePage(ev) {
     gPageIdx = 0

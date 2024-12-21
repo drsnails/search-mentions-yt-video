@@ -103,6 +103,7 @@ function injectedFunction({
     page: _page,
     percent: _percent,
     seconds: _seconds,
+    volume: _volume,
     direction: _direction,
     isSkipToClosest: _isSkipToClosest,
 }) {
@@ -341,6 +342,13 @@ function injectedFunction({
         sendTimeData(elVideo.currentTime / elVideo.duration * 100)
     }
 
+    function updateAudioVolume(volume) {
+        return
+        const elVideo = document.querySelector(VIDEO_SELECTOR)
+        const timeFactor = 1 + volume
+        elVideo.volume *= timeFactor
+    }
+
     function togglePlay() {
         const elVideo = document.querySelector(VIDEO_SELECTOR)
         elVideo.paused ? elVideo.play() : elVideo.pause()
@@ -517,6 +525,7 @@ function injectedFunction({
     else if (_funcName === 'changeTime') changeTime(_percent)
     else if (_funcName === 'togglePlay') togglePlay()
     else if (_funcName === 'updateVideoTime') updateVideoTime(_seconds)
+    else if (_funcName === 'updateAudioVolume') updateAudioVolume(_volume)
     else if (_funcName === 'onTimeInterval') onTimeInterval()
     else mainFunctions[_page][_funcName](_argsObj)
 

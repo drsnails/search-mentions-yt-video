@@ -323,6 +323,7 @@ form {
     height: var(--red-line-height);
     background-color: red;
     display: none;
+    pointer-events: none;
     z-index: 100;
 }
 
@@ -336,6 +337,11 @@ form {
     height: calc(var(--red-line-height) * 1.25);
     z-index: 150;
     background-color: rgb(175 25 25 / 80%);
+    transition: background-color .2s;
+
+    &.active {
+        background-color: red;
+    }
 }
 
 
