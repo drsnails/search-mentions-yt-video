@@ -75,7 +75,7 @@ function renderTime(time, totalTime, percent) {
     time && gElCurrentTimes.forEach(el => el.innerText = time)
     totalTime && gElTotalTimes.forEach(el => el.innerText = totalTime)
     if (percent && !gIsMouseDown) {
-        insertRedLine(window.innerWidth * (+percent / 100) - 0.5)
+        renderColoredLine(window.innerWidth * (+percent / 100) - 0.5)
     }
 }
 
@@ -119,15 +119,20 @@ function addEventListeners() {
 
 function handleDbClick() {
     let prevClickTime = 0
+    let currTimeSkip = 0
+    const MIN_TIME_DIFF = 400
     return (ev) => {
         const now = Date.now()
-        if ((now - prevClickTime) <= 400) {
+        if ((now - prevClickTime) <= MIN_TIME_DIFF) {
             let timeSkip = 5
             if (ev.target.classList.contains('db-left')) {
                 timeSkip *= -1
             }
-            highlightTimeContainer(ev.target, Math.abs(timeSkip))
+            currTimeSkip += timeSkip
+            highlightTimeContainer(ev.target, Math.abs(currTimeSkip))
             executeCurrentContentScript({ funcName: 'updateVideoTime', seconds: timeSkip })
+        } else {
+            currTimeSkip = 0
         }
         prevClickTime = now
     }
@@ -252,7 +257,6 @@ async function onIncrementPage(ev, command = 'increment-page-from-time') {
     } catch (error) {
         console.log('Popup onIncrementPage error:', error)
     }
-    // onChangePageIdx(1)
 }
 
 
@@ -273,26 +277,8 @@ async function onDecrementPage(ev, command = 'decrement-page-from-time') {
     } catch (error) {
         console.log('Popup onDecrementPage error:', error)
     }
-    // onChangePageIdx(-1)
 }
 
-async function onChangePageIdx(diff) {
-
-    // gPageIdx += diff
-    // let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-    // const pageVals = {
-    //     transcript: {
-    //         searchTerm: gElSearchInput?.value.trim()
-    //     }
-    // }
-    // executeContentScript(tab, {
-    //     page: gPage,
-    //     funcName: 'onChangePageIdx',
-    //     pageIdx: gPageIdx,
-    //     direction: diff,
-    //     ...pageVals[gPage]
-    // })
-}
 
 
 function setPathInSvg(path) {
@@ -356,6 +342,12 @@ function onKeyDown(ev) {
     }
 }
 
+/**
+ ** Highlights a time container element by updating its inner text and applying an animation.
+ *
+ * @param {HTMLElement|string} elSide - The element or a string selector for the element to highlight.
+ * @param {number} [time=5] - The time value to display in the container. Defaults to 5.
+ */
 function highlightTimeContainer(elSide, time = 5) {
     if (typeof elSide === 'string') {
         elSide = document.querySelector(`.db-${elSide}`)
@@ -372,7 +364,6 @@ function onChangePage(ev) {
         const navPage = el.dataset.page
         changePage(navPage)
     }
-
 }
 
 
@@ -474,7 +465,7 @@ function _debounce(func, wait) {
     }
 }
 
-function insertRedLine(x, color = 'red') {
+function renderColoredLine(x, color = 'red') {
     const elLine = document.querySelector('.cursor.red-line')
     if (!elLine) return
     elLine.style.display = 'block'
