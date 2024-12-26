@@ -1,7 +1,7 @@
 {
     "name": "YouTube Transcript And Heatmap Search",
     "description": "Search through YouTube video transcripts and heatmaps to find specific mentions and highlights",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "manifest_version": 3,
     "permissions": [
         "activeTab",
