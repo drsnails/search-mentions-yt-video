@@ -109,7 +109,7 @@ function addEventListeners() {
     elSvg.addEventListener('mouseenter', onSvgHeatmapMouseEnter)
     elSvg.addEventListener('mouseleave', onSvgHeatmapMouseLeave)
     elSvg.addEventListener('mousemove', onSvgHeatmapMouseMove)
-    
+
 
 
 
@@ -125,6 +125,8 @@ function handleDbClick() {
         const now = Date.now()
         if ((now - prevClickTime) <= MIN_TIME_DIFF) {
             let timeSkip = 5
+            if (Math.abs(currTimeSkip) >= 60) timeSkip = 10
+            if (Math.abs(currTimeSkip) >= 180) timeSkip = 30
             if (ev.target.classList.contains('db-left')) {
                 timeSkip *= -1
             }
