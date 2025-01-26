@@ -32,7 +32,7 @@ function onInit() {
     const searchTerm = _loadFromStorage('searchTerm')
     gElSearchInput.value = searchTerm || ''
     executeCurrentContentScript({ funcName: 'init' })
-    chrome.runtime.onMessage.addListener(({ type, pageIdx, time, totalTime, command, path, percent }) => {
+    chrome.runtime.onMessage.addListener(({ type, pageIdx, time, totalTime, command, path, percent, videoDuration }) => {
         switch (type) {
             case 'search':
                 showPagination();
@@ -41,14 +41,18 @@ function onInit() {
             case 'setPageIdx':
                 gPageIdx = pageIdx;
                 gElPageResult.innerText = gPageIdx + 1;
-                renderTime(time, totalTime, percent);
+                renderTime({ time, totalTime, percent });
                 break;
             case 'heatmap-path':
                 setPathInSvg(path);
                 break;
             case 'change-time':
                 console.log('Time changed');
-                renderTime(time, totalTime, percent);
+                renderTime({ time, totalTime, percent });
+                break;
+            case 'send-time':
+                // isMouseMove is true when the time is sent from the content script so we can render the time above the line
+                renderShadowLineTime(percent, videoDuration);
                 break;
             case 'no-matches':
                 console.log('No matches found');
@@ -71,11 +75,11 @@ function onInit() {
     })
 }
 
-function renderTime(time, totalTime, percent) {
-    time && gElCurrentTimes.forEach(el => el.innerText = time)
-    totalTime && gElTotalTimes.forEach(el => el.innerText = totalTime)
+function renderTime({ time, totalTime, percent }) {
+    if (time) gElCurrentTimes.forEach(el => el.innerText = time)
+    if (totalTime) gElTotalTimes.forEach(el => el.innerText = totalTime)
     if (percent && !gIsMouseDown) {
-        renderColoredLine(window.innerWidth * (+percent / 100) - 0.5)
+        renderColoredLine(window.innerWidth * (+percent / 100) - 0.5, time)
     }
 }
 
@@ -157,12 +161,34 @@ function onSvgHeatmapMouseEnter() {
 
 function onSvgHeatmapMouseMove(ev) {
     if (!gIsSvgMouseOver) return
-    gElCursorShadow && (gElCursorShadow.style.left = `${ev.x - 0.5}px`)
+    if (gElCursorShadow) {
+        moveShadowTimeLine(ev)
+        getCurrentTime(ev)
+    }
     if (gIsMouseDown) {
         onSetNewVideoTime(ev)
     }
 }
+function getCurrentTime(ev) {
+    executeCurrentContentScript({ funcName: 'sendTimeData', percent: ev.x / window.innerWidth * 100 })
+}
 
+function renderShadowLineTime(percent, videoDuration) {
+    const time = videoDuration * percent / 100
+    const formattedTime = getFormattedTime(time)
+    gElCursorShadow.style.setProperty('--left-offset', '50%')
+    const shadowCursorPosition = parseInt(gElCursorShadow.style.left)
+    if (shadowCursorPosition < 20) {
+        gElCursorShadow.style.setProperty('--left-offset', (20 - shadowCursorPosition) + 'px')
+    } else if (shadowCursorPosition > 280) {
+        gElCursorShadow.style.setProperty('--left-offset', (280 - shadowCursorPosition) + 'px')
+    }
+    gElCursorShadow.dataset.time = formattedTime
+}
+
+function moveShadowTimeLine(ev) {
+    return gElCursorShadow.style.left = `${ev.x - 0.5}px`
+}
 
 function onSvgHeatmapMouseDown(ev) {
     gIsMouseDown = true
@@ -467,7 +493,8 @@ function _debounce(func, wait) {
     }
 }
 
-function renderColoredLine(x, color = 'red') {
+function renderColoredLine(x, time, color = 'red') {
+    console.log('time:', time)
     const elLine = document.querySelector('.cursor.red-line')
     if (!elLine) return
     elLine.style.display = 'block'
@@ -482,4 +509,18 @@ function _saveToStorage(key, data) {
 function _loadFromStorage(key) {
     const data = localStorage.getItem(key)
     return JSON.parse(data)
+}
+
+
+
+function getFormattedTime(videoDuration) {
+    const pad = time => (time + '').padStart(2, '0')
+    const hours = Math.floor(videoDuration / 3600);
+    const minutes = Math.floor((videoDuration % 3600) / 60)
+    const seconds = Math.floor(videoDuration % 60)
+    const formattedSeconds = pad(seconds)
+    const formattedMinutes = hours ? pad(minutes) : minutes
+    let formattedTime = `${formattedMinutes}:${formattedSeconds}`
+    if (hours) formattedTime = `${hours}:${formattedTime}`;
+    return formattedTime;
 }

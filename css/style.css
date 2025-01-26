@@ -328,6 +328,8 @@ form {
 }
 
 .cursor-shadow {
+    --left-offset: 50%;
+
     position: fixed;
     display: none;
     bottom: 0;
@@ -342,6 +344,16 @@ form {
 
     &.active {
         background-color: red;
+    }
+
+    &::before {
+        content: attr(data-time);
+        position: absolute;
+        top: -25%;
+        color: white;
+        font-size: 10px;
+        left: var(--left-offset);
+        transform: translateX(-50%);
     }
 }
 

@@ -364,13 +364,14 @@ function injectedFunction({
     }
 
 
-    function sendTimeData(percent) {
-        const { formattedCurrTime, formattedTotalTime, percent: _percent } = getTimeFromVideo();
+    function sendTimeData(percent, type = 'change-time') {
+        const { formattedCurrTime, formattedTotalTime, percent: _percent, videoDuration } = getTimeFromVideo();
         chrome.runtime.sendMessage({
-            type: 'change-time',
+            type,
             percent: percent || _percent,
             time: formattedCurrTime,
-            totalTime: formattedTotalTime
+            totalTime: formattedTotalTime,
+            videoDuration
         });
     }
 
@@ -424,8 +425,10 @@ function injectedFunction({
         const hours = Math.floor(videoDuration / 3600);
         const minutes = Math.floor((videoDuration % 3600) / 60)
         const seconds = Math.floor(videoDuration % 60)
-        let formattedTime = `${pad(minutes)}:${pad(seconds)}`
-        if (hours) formattedTime = `${pad(hours)}:${formattedTime}`;
+        const formattedSeconds = pad(seconds)
+        const formattedMinutes = hours ? pad(minutes) : minutes
+        let formattedTime = `${formattedMinutes}:${formattedSeconds}`
+        if (hours) formattedTime = `${hours}:${formattedTime}`;
         return formattedTime;
     }
 
@@ -523,6 +526,7 @@ function injectedFunction({
     //* Execute the main function
     if (_funcName === 'init') init()
     else if (_funcName === 'changeTime') changeTime(_percent)
+    else if (_funcName === 'sendTimeData') sendTimeData(_percent, 'send-time')
     else if (_funcName === 'togglePlay') togglePlay()
     else if (_funcName === 'updateVideoTime') updateVideoTime(_seconds)
     else if (_funcName === 'updateAudioVolume') updateAudioVolume(_volume)
