@@ -178,8 +178,8 @@ function renderShadowLineTime(percent, videoDuration) {
     const formattedTime = getFormattedTime(time)
     gElCursorShadow.style.setProperty('--left-offset', '50%')
     const shadowCursorPosition = parseInt(gElCursorShadow.style.left)
-    if (shadowCursorPosition < 20) {
-        gElCursorShadow.style.setProperty('--left-offset', (20 - shadowCursorPosition) + 'px')
+    if (shadowCursorPosition < 15) {
+        gElCursorShadow.style.setProperty('--left-offset', (15 - shadowCursorPosition) + 'px')
     } else if (shadowCursorPosition > 280) {
         gElCursorShadow.style.setProperty('--left-offset', (280 - shadowCursorPosition) + 'px')
     }
