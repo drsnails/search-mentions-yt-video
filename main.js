@@ -376,7 +376,7 @@ function injectedFunction({
         const { formattedCurrTime, formattedTotalTime, percent: _percent, videoDuration } = getTimeFromVideo();
         chrome.runtime.sendMessage({
             type,
-            percent: percent || _percent,
+            percent: percent ?? _percent,
             time: formattedCurrTime,
             totalTime: formattedTotalTime,
             videoDuration
