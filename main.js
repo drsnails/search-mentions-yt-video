@@ -5,35 +5,43 @@ let contentPageIdx = 0;
 let contentSearchResults = null;
 
 chrome.runtime.onMessage.addListener(({ type, command, pageIdx, page, searchTerm, direction }) => {
-    if (type === 'command') {
-        //* If pageIdx is provided (from popup), use it, otherwise calculate new index
-        const newPageIdx = (pageIdx !== undefined)
-            ? pageIdx
-            : contentPageIdx + (command.startsWith('increment-page') ? 1 : -1)
+    try {
+        if (type === 'command') {
+            //* If pageIdx is provided (from popup), use it, otherwise calculate new index
+            const newPageIdx = (pageIdx !== undefined)
+                ? pageIdx
+                : contentPageIdx + (command.startsWith('increment-page') ? 1 : -1)
 
-        contentPageIdx = newPageIdx; //* Update our local state
-        page ||= 'heatmap'
-        const args = {
-            page,
-            funcName: 'onChangePageIdx',
-            pageIdx: newPageIdx,
-            searchTerm,
-            direction: command.startsWith('increment-page') ? 1 : -1,
-            isSkipToClosest: command.endsWith('from-time')
-        };
-        injectedFunction(args)
+            contentPageIdx = newPageIdx; //* Update our local state
+            page ||= 'heatmap'
+            const args = {
+                page,
+                funcName: 'onChangePageIdx',
+                pageIdx: newPageIdx,
+                searchTerm,
+                direction: command.startsWith('increment-page') ? 1 : -1,
+                isSkipToClosest: command.endsWith('from-time')
+            };
+            injectedFunction(args)
+        }
+    } catch (err) {
+        console.error('Error handling command message:', err);
     }
 });
 
 const forwardKeyCodes = ['KeyX', 'Period']
 const backwardKeyCodes = ['KeyZ', 'Comma']
 document.addEventListener('keydown', (ev) => {
-    if (ev.altKey) {
-        if (forwardKeyCodes.includes(ev.code)) {
-            chrome.runtime.sendMessage({ type: 'keybind', altKey: ev.altKey, shiftKey: ev.shiftKey, key: 'x' });
-        } else if (backwardKeyCodes.includes(ev.code)) {
-            chrome.runtime.sendMessage({ type: 'keybind', altKey: ev.altKey, shiftKey: ev.shiftKey, key: 'z' });
+    try {
+        if (ev.altKey) {
+            if (forwardKeyCodes.includes(ev.code)) {
+                chrome.runtime.sendMessage({ type: 'keybind', altKey: ev.altKey, shiftKey: ev.shiftKey, key: 'x' });
+            } else if (backwardKeyCodes.includes(ev.code)) {
+                chrome.runtime.sendMessage({ type: 'keybind', altKey: ev.altKey, shiftKey: ev.shiftKey, key: 'z' });
+            }
         }
+    } catch (err) {
+        console.error('Error handling keydown:', err);
     }
 });
 

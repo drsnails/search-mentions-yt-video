@@ -20,30 +20,38 @@ chrome.commands.onCommand.addListener(async (command) => {
     } catch (err) {
         console.error('Error handling command:', err);
     }
-}); 
+});
 
 
 
 function handleCustomKeybind(command) {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs.length === 0) return;
-        const tab = tabs[0];
-        chrome.tabs.sendMessage(tab.id, {
-            type: 'command',
-            command: command
+    try {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs.length === 0) return;
+            const tab = tabs[0];
+            chrome.tabs.sendMessage(tab.id, {
+                type: 'command',
+                command: command
+            });
         });
-    });
+    } catch (err) {
+        console.error('Error in handleCustomKeybind:', err);
+    }
 }
 
 // Listen for Alt+Shift+X and Alt+Shift+Z
 const forwardKeys = ['x', '.']
 const backwardKeys = ['z', ',']
 chrome.runtime.onMessage.addListener(msg => {
-    if (msg.type === 'keybind') {
-        if (forwardKeys.includes(msg.key) && msg.altKey) {
-            handleCustomKeybind(!msg.shiftKey ? 'increment-page-from-time' : 'increment-page');
-        } else if (backwardKeys.includes(msg.key) && msg.altKey) {
-            handleCustomKeybind(!msg.shiftKey ? 'decrement-page-from-time' : 'decrement-page');
+    try {
+        if (msg.type === 'keybind') {
+            if (forwardKeys.includes(msg.key) && msg.altKey) {
+                handleCustomKeybind(!msg.shiftKey ? 'increment-page-from-time' : 'increment-page');
+            } else if (backwardKeys.includes(msg.key) && msg.altKey) {
+                handleCustomKeybind(!msg.shiftKey ? 'decrement-page-from-time' : 'decrement-page');
+            }
         }
+    } catch (err) {
+        console.error('Error handling keybind message:', err);
     }
 });

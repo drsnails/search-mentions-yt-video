@@ -25,54 +25,62 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 function onInit() {
-    setGlobalElements()
-    addEventListeners()
-    startVideoTimeInterval()
-    gElCursorShadow = document.querySelector('.cursor-shadow')
-    const searchTerm = _loadFromStorage('searchTerm')
-    gElSearchInput.value = searchTerm || ''
-    executeCurrentContentScript({ funcName: 'init' })
-    chrome.runtime.onMessage.addListener(({ type, pageIdx, time, totalTime, command, path, percent, videoDuration }) => {
-        switch (type) {
-            case 'search':
-                showPagination();
-                // gElTotalTime.innerText = totalTime;
-                break;
-            case 'setPageIdx':
-                gPageIdx = pageIdx;
-                gElPageResult.innerText = gPageIdx + 1;
-                renderTime({ time, totalTime, percent });
-                break;
-            case 'heatmap-path':
-                setPathInSvg(path);
-                break;
-            case 'change-time':
-                console.log('Time changed');
-                renderTime({ time, totalTime, percent });
-                break;
-            case 'send-time':
-                // isMouseMove is true when the time is sent from the content script so we can render the time above the line
-                renderShadowLineTime(percent, videoDuration);
-                break;
-            case 'no-matches':
-                console.log('No matches found');
-                break;
-            case 'command':
-                if (command.startsWith('increment-page')) onIncrementPage({}, command);
-                if (command.startsWith('decrement-page')) onDecrementPage({}, command);
-                break;
-            case 'play':
-                startVideoTimeInterval()
-                setPlayPauseBtn({ isPlaying: true })
-                break;
-            case 'pause':
-                stopVideoTimeInterval()
-                setPlayPauseBtn({ isPlaying: false })
-                break;
-            default:
-                console.log('Unknown message type:', type);
-        }
-    })
+    try {
+        setGlobalElements()
+        addEventListeners()
+        startVideoTimeInterval()
+        gElCursorShadow = document.querySelector('.cursor-shadow')
+        const searchTerm = _loadFromStorage('searchTerm')
+        gElSearchInput.value = searchTerm || ''
+        executeCurrentContentScript({ funcName: 'init' })
+        chrome.runtime.onMessage.addListener(({ type, pageIdx, time, totalTime, command, path, percent, videoDuration }) => {
+            try {
+                switch (type) {
+                    case 'search':
+                        showPagination();
+                        // gElTotalTime.innerText = totalTime;
+                        break;
+                    case 'setPageIdx':
+                        gPageIdx = pageIdx;
+                        gElPageResult.innerText = gPageIdx + 1;
+                        renderTime({ time, totalTime, percent });
+                        break;
+                    case 'heatmap-path':
+                        setPathInSvg(path);
+                        break;
+                    case 'change-time':
+                        console.log('Time changed');
+                        renderTime({ time, totalTime, percent });
+                        break;
+                    case 'send-time':
+                        // isMouseMove is true when the time is sent from the content script so we can render the time above the line
+                        renderShadowLineTime(percent, videoDuration);
+                        break;
+                    case 'no-matches':
+                        console.log('No matches found');
+                        break;
+                    case 'command':
+                        if (command.startsWith('increment-page')) onIncrementPage({}, command);
+                        if (command.startsWith('decrement-page')) onDecrementPage({}, command);
+                        break;
+                    case 'play':
+                        startVideoTimeInterval()
+                        setPlayPauseBtn({ isPlaying: true })
+                        break;
+                    case 'pause':
+                        stopVideoTimeInterval()
+                        setPlayPauseBtn({ isPlaying: false })
+                        break;
+                    default:
+                        console.log('Unknown message type:', type);
+                }
+            } catch (err) {
+                console.error('Error handling message in onInit:', err);
+            }
+        })
+    } catch (err) {
+        console.error('Error in onInit:', err);
+    }
 }
 
 function renderTime({ time, totalTime, percent }) {
@@ -246,26 +254,25 @@ function stopVideoTimeInterval() {
 }
 
 async function onSearch(ev) {
-    ev.preventDefault()
-    const elSrcBtn = ev.target.querySelector('.search-btn')
-    const searchTerm = gElSearchInput.value.trim()
-    if (!searchTerm) {
-        gElSearchInput.focus()
-        return _animateCSS(elSrcBtn, 'shake')
-    }
-
-    const formattedSearchTerm = formatSearchTerm(searchTerm)
-    document.querySelector('span.term-title span').innerText = formattedSearchTerm
     try {
+        ev.preventDefault()
+        const elSrcBtn = ev.target.querySelector('.search-btn')
+        const searchTerm = gElSearchInput.value.trim()
+        if (!searchTerm) {
+            gElSearchInput.focus()
+            return _animateCSS(elSrcBtn, 'shake')
+        }
+
+        const formattedSearchTerm = formatSearchTerm(searchTerm)
+        document.querySelector('span.term-title span').innerText = formattedSearchTerm
         let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
         executeContentScript(tab, {
             page: gPage,
             funcName: 'getTranscriptTimestamps',
             searchTerm
         })
-
     } catch (error) {
-        console.log('Popup onSearch error:', error)
+        console.error('Error in onSearch:', error)
     }
 }
 
@@ -523,4 +530,19 @@ function getFormattedTime(videoDuration) {
     let formattedTime = `${formattedMinutes}:${formattedSeconds}`
     if (hours) formattedTime = `${hours}:${formattedTime}`;
     return formattedTime;
+}
+
+function sendTimeData(percent, type = 'change-time') {
+    try {
+        const { formattedCurrTime, formattedTotalTime, percent: _percent, videoDuration } = getTimeFromVideo();
+        chrome.runtime.sendMessage({
+            type,
+            percent: percent || _percent,
+            time: formattedCurrTime,
+            totalTime: formattedTotalTime,
+            videoDuration
+        });
+    } catch (err) {
+        console.error('Error sending time data:', err);
+    }
 }
