@@ -160,13 +160,9 @@ function setPlayPauseBtn({ elBtn, isPlaying }) {
     if (!elBtn) elBtn = document.querySelector('.play-pause-btn');
     if (!elBtn) return;
     
+    // Remove the force re-render code as it's interrupting the animation
     gIsPlaying = isPlaying;
-    elBtn.classList.toggle('paused', isPlaying);
-    
-    // Force re-render of button state
-    elBtn.style.display = 'none';
-    elBtn.offsetHeight; // trigger reflow
-    elBtn.style.display = '';
+    elBtn.classList.toggle('paused', !isPlaying); // Reversed the logic here
 }
 
 function onSvgHeatmapMouseEnter() {
