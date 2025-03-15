@@ -1,5 +1,28 @@
 'use strict'
 
+async function sendMessageWithRetry(message, maxRetries = 3, delay = 1000) {
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            await chrome.runtime.sendMessage(message);
+            return; // Success, exit function
+        } catch (err) {
+            if (err.message.includes('Extension context invalidated')) {
+                // If this is the last retry, reload the page
+                if (i === maxRetries - 1) {
+                    // Reload the content script instead of the page
+                    chrome.runtime.reload();
+                    return;
+                }
+                // Wait before retrying
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
+            }
+            // If it's a different error, throw it
+            throw err;
+        }
+    }
+}
+
 //* state management at content script level
 let contentPageIdx = 0
 let contentSearchResults = null
@@ -70,55 +93,47 @@ function setupVideoListeners() {
 function handleWaiting() {
     // Clear any existing timeout
     if (gBufferingTimeout) clearTimeout(gBufferingTimeout);
-    
+
     gIsVideoBuffering = true;
-    chrome.runtime.sendMessage({ type: 'buffering-start' });
-    
+    sendMessageWithRetry({ type: 'buffering-start' });
+
     // Set a timeout to reset buffering state if waiting too long
     gBufferingTimeout = setTimeout(() => {
         gIsVideoBuffering = false;
-        chrome.runtime.sendMessage({ type: 'buffering-timeout' });
+        sendMessageWithRetry({ type: 'buffering-timeout' });
     }, 10000); // 10 second timeout
 }
 
 function handlePlaying() {
     if (gBufferingTimeout) clearTimeout(gBufferingTimeout);
     gIsVideoBuffering = false;
-    chrome.runtime.sendMessage({ type: 'buffering-end' });
+    sendMessageWithRetry({ type: 'buffering-end' });
 }
 
 function attachVideoEventListeners(elVideo) {
     // Remove any existing listeners first
     removeVideoEventListeners(elVideo);
-    
+
     // Create named functions for each listener so we can remove them later
-    const waitingListener = () => handleWaiting();
-    const playingListener = () => handlePlaying();
-    const playListener = () => chrome.runtime.sendMessage({ type: 'play' });
-    const pauseListener = () => chrome.runtime.sendMessage({ type: 'pause' });
-    
+    const playListener = () => sendMessageWithRetry({ type: 'play' });
+    const pauseListener = () => sendMessageWithRetry({ type: 'pause' });
+
     // Store listeners in map
     videoEventListeners.set(elVideo, {
-        waiting: waitingListener,
-        playing: playingListener,
         play: playListener,
         pause: pauseListener
     });
-    
+
     // Attach listeners
-    elVideo.addEventListener('waiting', waitingListener);
-    elVideo.addEventListener('playing', playingListener);
     elVideo.addEventListener('play', playListener);
     elVideo.addEventListener('pause', pauseListener);
 }
 
 function removeVideoEventListeners(elVideo) {
     if (!elVideo) return;
-    
+
     const listeners = videoEventListeners.get(elVideo);
     if (listeners) {
-        elVideo.removeEventListener('waiting', listeners.waiting);
-        elVideo.removeEventListener('playing', listeners.playing);
         elVideo.removeEventListener('play', listeners.play);
         elVideo.removeEventListener('pause', listeners.pause);
         videoEventListeners.delete(elVideo);
@@ -147,9 +162,9 @@ const observer = new MutationObserver((mutations) => {
 });
 
 // Start observing the document with the configured parameters
-observer.observe(document.body, { 
-    childList: true, 
-    subtree: true 
+observer.observe(document.body, {
+    childList: true,
+    subtree: true
 });
 
 
@@ -516,31 +531,18 @@ function injectedFunction({
 
                 const { videoDuration, formattedTotalTime, currTime: prevSkippedTime } = getTimeFromVideo()
 
-                if (_isSkipToClosest) {
-                    let nextPageIdx
-                    if (direction === 1) {
-                        nextPageIdx = _peakPercentages.findIndex(peakPercent => +peakPercent / 100 * videoDuration > prevSkippedTime)
-                        if (nextPageIdx && nextPageIdx !== -1) {
-                            // console.log('\n\n****************************************');
-                            // console.log('nextPageIdx:', nextPageIdx)
-                            // console.log('pageIdx:', pageIdx)
-                            // console.log('contentPageIdx:', contentPageIdx)
-                            // console.log('gIsVideoBuffering:', gIsVideoBuffering)
-                            // console.log('****************************************\n\n');
-                            //* If we're moving from current peak to next peak (diff of 1)
-                            //* AND we're currently at the same peak (pageIdx matches contentPageIdx)
-                            //* AND video is buffering or paused, skip to next peak
-                            //*** Otherwise the video will not skip to the next peak ***//
-                            if (gIsVideoBuffering && pageIdx === nextPageIdx - 1) {
-                                nextPageIdx++
-                            }
-                            pageIdx = nextPageIdx
-                        }
-                    } else if (direction === -1) {
-                        // nextPageIdx = _peakPercentages.findLastIndex(peakPercent => +peakPercent / 100 * videoDuration < prevSkippedTime)
-                    }
+                let nextPageIdx
+                if (direction === 1) {
+                    nextPageIdx = _peakPercentages.findIndex(peakPercent => +peakPercent / 100 * videoDuration > prevSkippedTime)
+                } else if (direction === -1) {
+                    nextPageIdx = _peakPercentages.findLastIndex(peakPercent => {
+                        const currTime = +peakPercent / 100 * videoDuration
+                        const diff = Math.abs(currTime - prevSkippedTime)
+                        return diff >= 5 && currTime < prevSkippedTime
+                    })
                 }
-
+                
+                pageIdx = nextPageIdx && nextPageIdx !== -1 ? nextPageIdx : pageIdx
                 pageIdx = loopIdx(pageIdx, _peakPercentages.length)
                 contentPageIdx = pageIdx
 
