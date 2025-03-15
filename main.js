@@ -511,54 +511,44 @@ function injectedFunction({
         heatmap: {
             onChangePageIdx,
             execute(pageIdx, direction) {
-                if (!_peakPercentages) setHeatPercentages();
-                if (!_peakPercentages) return console.log('No matches found');
-                
-                const { videoDuration, formattedTotalTime, currTime: prevSkippedTime, elVideo } = getTimeFromVideo();
+                if (!_peakPercentages) setHeatPercentages()
+                if (!_peakPercentages) return console.log('No matches found')
+
+                const { videoDuration, formattedTotalTime, currTime: prevSkippedTime } = getTimeFromVideo()
 
                 if (_isSkipToClosest) {
-                    let nextPageIdx;
+                    let nextPageIdx
                     if (direction === 1) {
-                        nextPageIdx = _peakPercentages.findIndex(peakPercent => 
-                            +peakPercent / 100 * videoDuration > prevSkippedTime + (gIsVideoBuffering ? 1 : 0)
-                        );
-                        
-                        if (nextPageIdx !== -1) {
-                            // Add small buffer when video is buffering to prevent getting stuck
+                        nextPageIdx = _peakPercentages.findIndex(peakPercent => +peakPercent / 100 * videoDuration > prevSkippedTime)
+                        if (nextPageIdx && nextPageIdx !== -1) {
+                            // console.log('\n\n****************************************');
+                            // console.log('nextPageIdx:', nextPageIdx)
+                            // console.log('pageIdx:', pageIdx)
+                            // console.log('contentPageIdx:', contentPageIdx)
+                            // console.log('gIsVideoBuffering:', gIsVideoBuffering)
+                            // console.log('****************************************\n\n');
+                            //* If we're moving from current peak to next peak (diff of 1)
+                            //* AND we're currently at the same peak (pageIdx matches contentPageIdx)
+                            //* AND video is buffering or paused, skip to next peak
+                            //*** Otherwise the video will not skip to the next peak ***//
                             if (gIsVideoBuffering && pageIdx === nextPageIdx - 1) {
-                                nextPageIdx++;
+                                nextPageIdx++
                             }
-                            pageIdx = nextPageIdx;
+                            pageIdx = nextPageIdx
                         }
                     } else if (direction === -1) {
-                        // Add backward navigation support
-                        nextPageIdx = _peakPercentages.reduceRight((acc, peakPercent, idx) => {
-                            if (acc === -1 && +peakPercent / 100 * videoDuration < prevSkippedTime) {
-                                return idx;
-                            }
-                            return acc;
-                        }, -1);
-                        
-                        if (nextPageIdx !== -1) pageIdx = nextPageIdx;
+                        // nextPageIdx = _peakPercentages.findLastIndex(peakPercent => +peakPercent / 100 * videoDuration < prevSkippedTime)
                     }
                 }
 
-                pageIdx = loopIdx(pageIdx, _peakPercentages.length);
-                contentPageIdx = pageIdx;
+                pageIdx = loopIdx(pageIdx, _peakPercentages.length)
+                contentPageIdx = pageIdx
 
-                const percent = _peakPercentages[pageIdx];
-                skipToPercent(+percent + 0.00001);
-                const calculatedTimeInSeconds = videoDuration * percent / 100;
-                const formattedTime = getFormattedTime(calculatedTimeInSeconds);
-                
-                chrome.runtime.sendMessage({ 
-                    type: 'setPageIdx', 
-                    pageIdx, 
-                    time: formattedTime, 
-                    totalTime: formattedTotalTime, 
-                    percent,
-                    isBuffering: gIsVideoBuffering
-                });
+                const percent = _peakPercentages[pageIdx]
+                skipToPercent(+percent + 0.00001)
+                const calculatedTimeInSeconds = videoDuration * percent / 100
+                const formattedTime = getFormattedTime(calculatedTimeInSeconds)
+                chrome.runtime.sendMessage({ type: 'setPageIdx', pageIdx, time: formattedTime, totalTime: formattedTotalTime, percent })
             }
         }
     }
