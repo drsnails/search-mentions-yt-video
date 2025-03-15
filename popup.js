@@ -162,7 +162,7 @@ function setPlayPauseBtn({ elBtn, isPlaying }) {
     
     // Remove the force re-render code as it's interrupting the animation
     gIsPlaying = isPlaying;
-    elBtn.classList.toggle('paused', !isPlaying); // Reversed the logic here
+    elBtn.classList.toggle('paused', isPlaying); // Reversed the logic here
 }
 
 function onSvgHeatmapMouseEnter() {
