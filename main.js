@@ -10,7 +10,7 @@ async function sendMessageWithRetry(message, maxRetries = 3, delay = 1000) {
                 // If this is the last retry, reload the page
                 if (i === maxRetries - 1) {
                     // Reload the content script instead of the page
-                    chrome.runtime.reload();
+                    chrome?.runtime?.reload?.();
                     return;
                 }
                 // Wait before retrying
@@ -193,6 +193,7 @@ function injectedFunction({
     const TRANSCRIPTS_SEGS_SELECTOR = '#segments-container > ytd-transcript-segment-renderer > div'
     const SVG_SELECTOR = 'div.ytp-heat-map-container > div.ytp-heat-map-chapter > svg'
     const VIDEO_SELECTOR = "#movie_player > div.html5-video-container > video"
+    const VOLUME_SLIDER_SELECTOR = '[draggable].ytp-volume-slider > .ytp-volume-slider-handle'
 
 
     //* ------------------- Transcript -------------------
@@ -414,11 +415,12 @@ function injectedFunction({
         sendTimeData(elVideo.currentTime / elVideo.duration * 100)
     }
 
-    function updateAudioVolume(volume) {
-        return
+    function updateAudioVolume(volumePercent) {
         const elVideo = document.querySelector(VIDEO_SELECTOR)
-        const timeFactor = 1 + volume
-        elVideo.volume *= timeFactor
+        const elSliderHandle = document.querySelector(VOLUME_SLIDER_SELECTOR)
+        let newVolume = Math.max(Math.min(elVideo.volume + volumePercent, 1), 0)
+        elVideo.volume = newVolume
+        elSliderHandle.style.left = `${(40 * newVolume)}px`
     }
 
     function togglePlay() {
@@ -541,7 +543,7 @@ function injectedFunction({
                         return diff >= 5 && currTime < prevSkippedTime
                     })
                 }
-                
+
                 pageIdx = nextPageIdx && nextPageIdx !== -1 ? nextPageIdx : pageIdx
                 pageIdx = loopIdx(pageIdx, _peakPercentages.length)
                 contentPageIdx = pageIdx
