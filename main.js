@@ -1,8 +1,8 @@
 'use strict'
 
 //* state management at content script level
-let contentPageIdx = 0;
-let contentSearchResults = null;
+let contentPageIdx = 0
+let contentSearchResults = null
 
 chrome.runtime.onMessage.addListener(({ type, command, pageIdx, page, searchTerm, direction }) => {
     try {
@@ -12,7 +12,7 @@ chrome.runtime.onMessage.addListener(({ type, command, pageIdx, page, searchTerm
                 ? pageIdx
                 : contentPageIdx + (command.startsWith('increment-page') ? 1 : -1)
 
-            contentPageIdx = newPageIdx; //* Update our local state
+            contentPageIdx = newPageIdx //* Update our local state
             page ||= 'heatmap'
             const args = {
                 page,
@@ -21,11 +21,11 @@ chrome.runtime.onMessage.addListener(({ type, command, pageIdx, page, searchTerm
                 searchTerm,
                 direction: command.startsWith('increment-page') ? 1 : -1,
                 isSkipToClosest: command.endsWith('from-time')
-            };
+            }
             injectedFunction(args)
         }
     } catch (err) {
-        console.error('Error handling command message:', err);
+        console.error('Error handling command message:', err)
     }
 });
 
@@ -41,14 +41,14 @@ document.addEventListener('keydown', (ev) => {
             }
         }
     } catch (err) {
-        console.error('Error handling keydown:', err);
+        console.error('Error handling keydown:', err)
     }
-});
+})
 
 var gIsVideoBuffering = false
-var gElVideo = null;
+var gElVideo = null
 // Add more robust buffering state management
-let gBufferingTimeout = null;
+let gBufferingTimeout = null
 
 // Create a map to store event listener references
 const videoEventListeners = new Map();
@@ -175,7 +175,7 @@ function injectedFunction({
         _isSkipToClosest
     }
     // console.log('_argsObj:', _argsObj)
-    const TRANSCRIPTS_SEGS_SELECTOR = '#segments-container > ytd-transcript-segment-renderer > div';
+    const TRANSCRIPTS_SEGS_SELECTOR = '#segments-container > ytd-transcript-segment-renderer > div'
     const SVG_SELECTOR = 'div.ytp-heat-map-container > div.ytp-heat-map-chapter > svg'
     const VIDEO_SELECTOR = "#movie_player > div.html5-video-container > video"
 
@@ -262,7 +262,7 @@ function injectedFunction({
         })
 
         // Store the results in the content script scope
-        contentSearchResults = _matchedElScriptSegs;
+        contentSearchResults = _matchedElScriptSegs
         return _matchedElScriptSegs
     }
 
@@ -413,7 +413,7 @@ function injectedFunction({
 
     function changeTime(percent) {
         skipToPercent(percent)
-        sendTimeData(percent);
+        sendTimeData(percent)
     }
 
     function onTimeInterval() {
@@ -422,14 +422,14 @@ function injectedFunction({
 
 
     function sendTimeData(percent, type = 'change-time') {
-        const { formattedCurrTime, formattedTotalTime, percent: _percent, videoDuration } = getTimeFromVideo();
+        const { formattedCurrTime, formattedTotalTime, percent: _percent, videoDuration } = getTimeFromVideo()
         chrome.runtime.sendMessage({
             type,
             percent: percent ?? _percent,
             time: formattedCurrTime,
             totalTime: formattedTotalTime,
             videoDuration
-        });
+        })
     }
 
     function getHeatMapPath() {
@@ -464,14 +464,14 @@ function injectedFunction({
 
         if (!contentSearchResults) {
             if (_page === 'heatmap') {
-                setHeatPercentages();
+                setHeatPercentages()
             } else {
-                setMatchedScriptsSegs(_searchTerm);
+                setMatchedScriptsSegs(_searchTerm)
             }
         }
 
         if (contentSearchResults) {
-            contentPageIdx = loopIdx(_pageIdx, contentSearchResults.length);
+            contentPageIdx = loopIdx(_pageIdx, contentSearchResults.length)
         }
 
         mainFunctions[_page].execute(_pageIdx, _direction)
@@ -479,14 +479,14 @@ function injectedFunction({
 
     function getFormattedTime(videoDuration) {
         const pad = time => (time + '').padStart(2, '0')
-        const hours = Math.floor(videoDuration / 3600);
+        const hours = Math.floor(videoDuration / 3600)
         const minutes = Math.floor((videoDuration % 3600) / 60)
         const seconds = Math.floor(videoDuration % 60)
         const formattedSeconds = pad(seconds)
         const formattedMinutes = hours ? pad(minutes) : minutes
         let formattedTime = `${formattedMinutes}:${formattedSeconds}`
-        if (hours) formattedTime = `${hours}:${formattedTime}`;
-        return formattedTime;
+        if (hours) formattedTime = `${hours}:${formattedTime}`
+        return formattedTime
     }
 
 
@@ -570,7 +570,7 @@ function injectedFunction({
         const elVideo = document.querySelector(VIDEO_SELECTOR)
         const videoDuration = getFormattedTime(+elVideo.duration)
         chrome.runtime.sendMessage({ type: elVideo.paused ? 'pause' : 'play' })
-        chrome.runtime.sendMessage({ type: 'heatmap-path', path: pathData, totalTime: videoDuration });
+        chrome.runtime.sendMessage({ type: 'heatmap-path', path: pathData, totalTime: videoDuration })
         sendTimeData()
     }
 
