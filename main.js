@@ -46,62 +46,111 @@ document.addEventListener('keydown', (ev) => {
 });
 
 var gIsVideoBuffering = false
-var gElVideo = setupVideoListeners()
+var gElVideo = null;
+// Add more robust buffering state management
+let gBufferingTimeout = null;
 
+// Create a map to store event listener references
+const videoEventListeners = new Map();
 
 // Initial setup
 function setupVideoListeners() {
+    // Check if video element exists
     const elVideo = document.querySelector('#movie_player > div.html5-video-container > video');
     if (elVideo) {
         attachVideoEventListeners(elVideo);
+        return elVideo;
     }
-    return elVideo
+    // Retry after a short delay if video not found
+    setTimeout(setupVideoListeners, 1000);
+    return null;
 }
 
 
 function handleWaiting() {
+    // Clear any existing timeout
+    if (gBufferingTimeout) clearTimeout(gBufferingTimeout);
+    
     gIsVideoBuffering = true;
+    chrome.runtime.sendMessage({ type: 'buffering-start' });
+    
+    // Set a timeout to reset buffering state if waiting too long
+    gBufferingTimeout = setTimeout(() => {
+        gIsVideoBuffering = false;
+        chrome.runtime.sendMessage({ type: 'buffering-timeout' });
+    }, 10000); // 10 second timeout
 }
 
 function handlePlaying() {
+    if (gBufferingTimeout) clearTimeout(gBufferingTimeout);
     gIsVideoBuffering = false;
+    chrome.runtime.sendMessage({ type: 'buffering-end' });
 }
 
 function attachVideoEventListeners(elVideo) {
-    elVideo.addEventListener('waiting', handleWaiting);
-    elVideo.addEventListener('playing', handlePlaying);
-    elVideo.addEventListener('play', () => {
-        chrome.runtime.sendMessage({ type: 'play' });
+    // Remove any existing listeners first
+    removeVideoEventListeners(elVideo);
+    
+    // Create named functions for each listener so we can remove them later
+    const waitingListener = () => handleWaiting();
+    const playingListener = () => handlePlaying();
+    const playListener = () => chrome.runtime.sendMessage({ type: 'play' });
+    const pauseListener = () => chrome.runtime.sendMessage({ type: 'pause' });
+    
+    // Store listeners in map
+    videoEventListeners.set(elVideo, {
+        waiting: waitingListener,
+        playing: playingListener,
+        play: playListener,
+        pause: pauseListener
     });
-    elVideo.addEventListener('pause', () => {
-        chrome.runtime.sendMessage({ type: 'pause' });
-    });
+    
+    // Attach listeners
+    elVideo.addEventListener('waiting', waitingListener);
+    elVideo.addEventListener('playing', playingListener);
+    elVideo.addEventListener('play', playListener);
+    elVideo.addEventListener('pause', pauseListener);
 }
 
-// Todo: This code is for changes in the video element without reloading the page. Check if this is needed
-// const observer = new MutationObserver((mutations) => {
-//     mutations.forEach((mutation) => {
-//         if (mutation.type === 'childList') {
-//             // Check if a new video element has been added
-//             const elNewVideo = document.querySelector('#movie_player > div.html5-video-container > video');
-//             if (elNewVideo && elNewVideo !== gElVideo) {
-//                 // Remove existing listeners if any
-//                 elNewVideo.removeEventListener('waiting', handleWaiting);
-//                 elNewVideo.removeEventListener('playing', handlePlaying);
+function removeVideoEventListeners(elVideo) {
+    if (!elVideo) return;
+    
+    const listeners = videoEventListeners.get(elVideo);
+    if (listeners) {
+        elVideo.removeEventListener('waiting', listeners.waiting);
+        elVideo.removeEventListener('playing', listeners.playing);
+        elVideo.removeEventListener('play', listeners.play);
+        elVideo.removeEventListener('pause', listeners.pause);
+        videoEventListeners.delete(elVideo);
+    }
+}
 
-//                 // Attach new listeners
-//                 attachVideoEventListeners(elNewVideo);
+const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        if (mutation.type === 'childList') {
+            const elNewVideo = document.querySelector('#movie_player > div.html5-video-container > video');
+            if (elNewVideo && elNewVideo !== gElVideo) {
+                console.log('Video element changed, updating listeners');
+                // Remove existing listeners from old video if it exists
+                if (gElVideo) {
+                    removeVideoEventListeners(gElVideo);
+                }
 
-//                 // Update gElVideo to the new video element
-//                 gElVideo = elNewVideo;
-//             }
-//         }
-//     });
-// });
+                // Attach new listeners
+                attachVideoEventListeners(elNewVideo);
 
-// // Start observing the document for changes
-// observer.observe(document.body, { childList: true, subtree: true });
-// Todo
+                // Update global reference
+                gElVideo = elNewVideo;
+            }
+        }
+    });
+});
+
+// Start observing the document with the configured parameters
+observer.observe(document.body, { 
+    childList: true, 
+    subtree: true 
+});
 
 
 function injectedFunction({
@@ -462,50 +511,54 @@ function injectedFunction({
         heatmap: {
             onChangePageIdx,
             execute(pageIdx, direction) {
-                if (!_peakPercentages) setHeatPercentages()
-                if (!_peakPercentages) return console.log('No matches found')
-                const { videoDuration, formattedTotalTime, currTime: prevSkippedTime, elVideo } = getTimeFromVideo()
+                if (!_peakPercentages) setHeatPercentages();
+                if (!_peakPercentages) return console.log('No matches found');
+                
+                const { videoDuration, formattedTotalTime, currTime: prevSkippedTime, elVideo } = getTimeFromVideo();
 
-                /**
-                *! Problems while going backwards, get stuck on the last peak. for now its disabled
-                *TODO: Fix backwards getting stuck on the last peak
-                */
                 if (_isSkipToClosest) {
-                    let nextPageIdx
+                    let nextPageIdx;
                     if (direction === 1) {
-                        nextPageIdx = _peakPercentages.findIndex(peakPercent => +peakPercent / 100 * videoDuration > prevSkippedTime)
-                        if (nextPageIdx && nextPageIdx !== -1) {
-                            // console.log('\n\n****************************************');
-                            // console.log('nextPageIdx:', nextPageIdx)
-                            // console.log('pageIdx:', pageIdx)
-                            // console.log('contentPageIdx:', contentPageIdx)
-                            // console.log('gIsVideoBuffering:', gIsVideoBuffering)
-                            // console.log('****************************************\n\n');
-                            //* If we're moving from current peak to next peak (diff of 1)
-                            //* AND we're currently at the same peak (pageIdx matches contentPageIdx)
-                            //* AND video is buffering or paused, skip to next peak
-                            //*** Otherwise the video will not skip to the next peak ***//
+                        nextPageIdx = _peakPercentages.findIndex(peakPercent => 
+                            +peakPercent / 100 * videoDuration > prevSkippedTime + (gIsVideoBuffering ? 1 : 0)
+                        );
+                        
+                        if (nextPageIdx !== -1) {
+                            // Add small buffer when video is buffering to prevent getting stuck
                             if (gIsVideoBuffering && pageIdx === nextPageIdx - 1) {
-                                nextPageIdx++
+                                nextPageIdx++;
                             }
-                            pageIdx = nextPageIdx
+                            pageIdx = nextPageIdx;
                         }
                     } else if (direction === -1) {
-                        // nextPageIdx = _peakPercentages.findLastIndex(peakPercent => +peakPercent / 100 * videoDuration < prevSkippedTime)
+                        // Add backward navigation support
+                        nextPageIdx = _peakPercentages.reduceRight((acc, peakPercent, idx) => {
+                            if (acc === -1 && +peakPercent / 100 * videoDuration < prevSkippedTime) {
+                                return idx;
+                            }
+                            return acc;
+                        }, -1);
+                        
+                        if (nextPageIdx !== -1) pageIdx = nextPageIdx;
                     }
-
-
                 }
 
-                pageIdx = loopIdx(pageIdx, _peakPercentages.length)
+                pageIdx = loopIdx(pageIdx, _peakPercentages.length);
+                contentPageIdx = pageIdx;
 
-                contentPageIdx = pageIdx
-
-                const percent = _peakPercentages[pageIdx]
-                skipToPercent(+percent + 0.00001)
-                const calculatedTimeInSeconds = videoDuration * percent / 100
-                const formattedTime = getFormattedTime(calculatedTimeInSeconds)
-                chrome.runtime.sendMessage({ type: 'setPageIdx', pageIdx, time: formattedTime, totalTime: formattedTotalTime, percent })
+                const percent = _peakPercentages[pageIdx];
+                skipToPercent(+percent + 0.00001);
+                const calculatedTimeInSeconds = videoDuration * percent / 100;
+                const formattedTime = getFormattedTime(calculatedTimeInSeconds);
+                
+                chrome.runtime.sendMessage({ 
+                    type: 'setPageIdx', 
+                    pageIdx, 
+                    time: formattedTime, 
+                    totalTime: formattedTotalTime, 
+                    percent,
+                    isBuffering: gIsVideoBuffering
+                });
             }
         }
     }

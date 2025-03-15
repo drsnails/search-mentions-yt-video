@@ -157,8 +157,16 @@ function onTogglePlay(ev) {
 }
 
 function setPlayPauseBtn({ elBtn, isPlaying }) {
-    if (!elBtn) elBtn = document.querySelector('.play-pause-btn')
-    elBtn.classList.toggle('paused', isPlaying)
+    if (!elBtn) elBtn = document.querySelector('.play-pause-btn');
+    if (!elBtn) return;
+    
+    gIsPlaying = isPlaying;
+    elBtn.classList.toggle('paused', isPlaying);
+    
+    // Force re-render of button state
+    elBtn.style.display = 'none';
+    elBtn.offsetHeight; // trigger reflow
+    elBtn.style.display = '';
 }
 
 function onSvgHeatmapMouseEnter() {
@@ -324,14 +332,33 @@ function setPathInSvg(path) {
 }
 
 
-async function executeCurrentContentScript(argsObj = {}) {
+async function executeCurrentContentScript(argsObj = {}, retryCount = 3) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (!tab) throw new Error('No active tab found');
 
-    try {
-        let [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-        executeContentScript(tab, argsObj)
-    } catch (error) {
-        console.log('Popup executeCurrentContentScript error:', error)
-    }
+            const response = await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                function: injectedFunction,
+                args: [{ ...argsObj, page: gPage }]
+            });
+
+            resolve(response);
+        } catch (error) {
+            if (retryCount > 0) {
+                console.log(`Retrying execution, attempts left: ${retryCount - 1}`);
+                setTimeout(() => {
+                    executeCurrentContentScript(argsObj, retryCount - 1)
+                        .then(resolve)
+                        .catch(reject);
+                }, 500);
+            } else {
+                console.error('Failed to execute content script after retries:', error);
+                reject(error);
+            }
+        }
+    });
 }
 
 async function executeContentScript(tab, argsObj = {}) {
