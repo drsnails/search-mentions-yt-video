@@ -196,38 +196,85 @@ form {
 
     .pagination-btns {
         display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        /* margin-top: 0.4rem; */
+        align-items: baseline;
 
-        >.btn {
+        --fontSize: 0.6rem;
+        .btn-wrapper { 
             position: relative;
-            padding: 0.4rem;
-            background-color: var(--mainBgColor);
-            color: white;
-            border-color: transparent;
+            --btnPadding: 0.5rem;
+            --btnBgColor: var(--clr-neutral-500, '#111');
+            --backgroundSize: 8px;
+            --effectTransTime: .16s;
 
-            &::after {
-                content: "";
-                height: 2px;
+
+            .background {
                 position: absolute;
-                left: 0;
-                right: 0;
-                bottom: 0.3rem;
-                background-color: white;
-                transform-origin: right;
-                transform: scaleX(0);
-                transition: transform 0.15s ease-in-out;
+                inset: calc(-1 * var(--backgroundSize));
+                /* background-color: red; */
+                z-index: 11;
             }
 
-            &:hover::after {
-                transform-origin: left;
-                transform: scaleX(1);
+            .btn {
+                position: relative;
+                padding: var(--btnPadding);
+                background-color: var(--btnBgColor);
+                font-size: var(--fontSize);
+                color: white;
+                border-color: transparent;
+                cursor: pointer;
+                --tOrigin: right;
+                z-index: 12;
+
+                &.right-dir {
+                    --tOrigin: left;
+                }
+
+
+
+                &::after {
+                    content: "";
+                    height: 2px;
+                    position: absolute;
+                    inset-inline: -0px;
+                    bottom: 0.3rem;
+                    background-color: white;
+                    transform-origin: var(--tOrigin);
+                    transform: scaleX(0);
+                    transition: transform var(--effectTransTime) ease-in;
+                }
+
+
+
+                &:hover::after {
+                    --tOrigin: left;
+                    transform: scaleX(1);
+                }
+
+                &.right-dir:hover::after {
+                    --tOrigin: right;
+                }
+
+                &.full {
+                    --colorTransTime: calc(var(--effectTransTime) * 0.75);
+
+                    transition: color var(--colorTransTime) calc(var(--effectTransTime) * 0.3) ease;
+
+
+                    &::after {
+                        background-color: #48008C;
+                        z-index: -1;
+                        pointer-events: none;
+                        height: 100%;
+                        inset-block: 0;
+                    }
+                }
             }
+
         }
 
         span {
-            font-size: 20px;
+            font-size: var(--fontSize);
+            margin-inline: 0.5rem;
         }
     }
 
@@ -370,7 +417,7 @@ form {
     z-index: 10;
 
     body:has(.heatmap-search.active) & {
-            width: 23vw;
+        width: 23vw;
     }
 
     &.db-right {
@@ -394,7 +441,7 @@ form {
         background-color: var(--mainBgColor);
         padding: 0.3rem;
         border-radius: 50%;
-        
+
     }
 }
 

@@ -106,6 +106,8 @@ function setGlobalElements() {
 
     gElCurrentTimes = [...document.querySelectorAll('.current-time')]
     gElTotalTimes = [...document.querySelectorAll('.total-time')]
+
+
 }
 
 
@@ -121,8 +123,6 @@ function addEventListeners() {
     elSvg.addEventListener('mouseenter', onSvgHeatmapMouseEnter)
     elSvg.addEventListener('mouseleave', onSvgHeatmapMouseLeave)
     elSvg.addEventListener('mousemove', onSvgHeatmapMouseMove)
-
-
 
 
     const elDbClicks = document.querySelectorAll('.db-click')
@@ -159,7 +159,7 @@ function onTogglePlay(ev) {
 function setPlayPauseBtn({ elBtn, isPlaying }) {
     if (!elBtn) elBtn = document.querySelector('.play-pause-btn');
     if (!elBtn) return;
-    
+
     // Remove the force re-render code as it's interrupting the animation
     gIsPlaying = isPlaying;
     elBtn.classList.toggle('paused', isPlaying); // Reversed the logic here
@@ -236,12 +236,53 @@ function onSvgHeatmapMouseLeave() {
     gElCursorShadow && (gElCursorShadow.style.display = 'none')
 }
 
+const { onBgcMouseMove, onBtnMouseEnterLeave, onBtnMouseMove } = (() => {
+
+    let movementX = null
+    const onBgcMouseMove = ev => {
+        movementX = ev.movementX
+    }
+
+    const onBtnMouseMove = ev => {
+        movementX = ev.movementX
+    }
+
+    const onBtnMouseEnterLeave = ev => {
+        ev.target.classList.toggle('right-dir', movementX < 0)
+    }
+
+    return {
+        onBgcMouseMove,
+        onBtnMouseEnterLeave,
+        onBtnMouseMove
+    }
+
+})()
+
+/* 
+onmouseenter = "onBtnMouseEnterLeave(event)"
+onmousemove = "onBtnMouseMove(event)"
+onmouseleave = "onBtnMouseEnterLeave(event)"
+
+onmousemove="onBgcMouseMove(event)"
+*/
 function addPageEventListeners() {
     gElForm.addEventListener('submit', onSearch)
     gElPrevBtn.addEventListener('click', onDecrementPage)
     gElNextBtn.addEventListener('click', onIncrementPage)
     gElBackBtn && gElBackBtn.addEventListener('click', showSearchInput)
     gElSearchInput && gElSearchInput.addEventListener('input', onInputSearch)
+
+    const elPaginationBtns = document.querySelectorAll('.btn-wrapper .btn')
+    const elBtnsBgcs = document.querySelectorAll('.btn-wrapper .background')
+    elPaginationBtns.forEach(elBtn => {
+        elBtn.addEventListener('mouseenter', onBtnMouseEnterLeave)
+        elBtn.addEventListener('mousemove', onBtnMouseMove)
+        elBtn.addEventListener('mouseleave', onBtnMouseEnterLeave)
+    })
+    elBtnsBgcs.forEach(elBtn => {
+        elBtn.addEventListener('mousemove', onBgcMouseMove)
+    })
 }
 
 
