@@ -68,6 +68,30 @@ document.addEventListener('keydown', (ev) => {
     }
 })
 
+//* ------------------- Debug -------------------
+var debugMode = false
+const isDebugMode = () => debugMode || window.location.hash.includes('debug')
+
+function appLog(...args) {
+    // console.clear()
+    console.log(...args)
+    if (isDebugMode()) {
+        const formattedArgs = args.map(x => isPrimitive(x) ? x : JSON.stringify(x, null, 4))
+        alert(formattedArgs.join(' - '))
+    }
+
+}
+
+document.addEventListener('keypress', onKeyPress)
+function onKeyPress(ev) {
+    if (ev.ctrlKey && ev.shiftKey && ev.code === 'KeyD') {
+        debugMode = !debugMode
+        alert(`Debug mode ${debugMode ? 'enabled' : 'disabled'}`)
+        return
+    }
+}
+////////////////////////////////////////////////////
+
 var gIsVideoBuffering = false
 var gElVideo = null
 // Add more robust buffering state management
@@ -451,8 +475,10 @@ function injectedFunction({
 
     function getHeatMapPath() {
         const elSvg = document.querySelector(SVG_SELECTOR)
-        if (!elSvg) return
-        const path = elSvg.querySelector('path').getAttribute('d')
+        if (!elSvg) return appLog('Cannot find svg', { svgSelector: SVG_SELECTOR })
+        appLog({ elSvg })
+        const path = elSvg.querySelector('svg > path').getAttribute('d')
+        appLog({ path })
         return path
     }
 
