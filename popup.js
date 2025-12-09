@@ -259,13 +259,7 @@ const { onBgcMouseMove, onBtnMouseEnterLeave, onBtnMouseMove } = (() => {
 
 })()
 
-/* 
-onmouseenter = "onBtnMouseEnterLeave(event)"
-onmousemove = "onBtnMouseMove(event)"
-onmouseleave = "onBtnMouseEnterLeave(event)"
 
-onmousemove="onBgcMouseMove(event)"
-*/
 function addPageEventListeners() {
     gElForm.addEventListener('submit', onSearch)
     gElPrevBtn.addEventListener('click', onDecrementPage)
