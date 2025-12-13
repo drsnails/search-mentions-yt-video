@@ -76,7 +76,7 @@ function appLog(...args) {
     // console.clear()
     console.log(...args)
     if (isDebugMode()) {
-        const formattedArgs = args.map(x => isPrimitive(x) ? x : JSON.stringify(x, null, 4))
+        const formattedArgs = args.map(x => isPrimitive(x) ? x : JSON.stringify(x, null, 2))
         alert(formattedArgs.join(' - '))
     }
 
@@ -216,6 +216,7 @@ function injectedFunction({
     // console.log('_argsObj:', _argsObj)
     const TRANSCRIPTS_SEGS_SELECTOR = '#segments-container > ytd-transcript-segment-renderer > div'
     const SVG_SELECTOR = 'div.ytp-heat-map-container > div.ytp-heat-map-chapter > svg'
+    const CHAPTER_SELECTOR = 'div.ytp-heat-map-container > div.ytp-heat-map-chapter'
     const VIDEO_SELECTOR = "#movie_player > div.html5-video-container > video"
     const VOLUME_SLIDER_SELECTOR = '[draggable].ytp-volume-slider > .ytp-volume-slider-handle'
 
@@ -474,13 +475,90 @@ function injectedFunction({
     }
 
     function getHeatMapPath() {
-        const elSvg = document.querySelector(SVG_SELECTOR)
-        if (!elSvg) return appLog('Cannot find svg', { svgSelector: SVG_SELECTOR })
-        // appLog({ elSvg })
-        const path = elSvg.querySelector('svg > path').getAttribute('d')
-        // appLog({ path })
-        return path
+        let rectsSizeData = getAllSvgSizeDatas()
+        if (!rectsSizeData.length) return appLog('Cannot find chapters', { CHAPTER_SELECTOR })
+        if (rectsSizeData.length === 1) {
+            return rectsSizeData[0].path
+        }
+        const mergedPaths = mergeScaledPaths(rectsSizeData)
+        return mergedPaths
     }
+
+
+    function mergeScaledPaths(pathsData, gap = 4) {
+        let mergedPathParts = [];
+        const totalWidthGaps = pathsData.at(-1).originalSizePos.width + pathsData.at(-1).originalSizePos.left
+        
+        pathsData.forEach(pathData => {
+            const { path, width, startX, originalSizePos } = pathData
+            const percent = originalSizePos.width / totalWidthGaps
+            const left = startX
+
+            let numberCount = 0;
+
+            const transformedPath = path.replace(/-?\d+(\.\d+)?/g, (match) => {
+                const originalValue = parseFloat(match);
+                const isXCoordinate = numberCount % 2 === 0;
+     
+                numberCount++;
+
+                if (isXCoordinate) {
+                    const scaledValue = (originalValue) * percent;
+                    return (scaledValue + left).toFixed(2);
+                } else {
+                    return match;
+                }
+            });
+
+            mergedPathParts.push(transformedPath);
+
+        });
+
+        return mergedPathParts.join(' ')
+    }
+
+    function getAllSvgSizeDatas() {
+        const elMapChapters = [...document.querySelectorAll(CHAPTER_SELECTOR)]
+        const sizeAndPositions = elMapChapters.map(el => {
+            const res = {}
+            const styleStr = el.getAttribute('style')
+            const widthStartIdx = styleStr.indexOf('width: ') + 'width: '.length
+            const widthEndIdx = styleStr.indexOf('; ')
+            const leftStartIdx = styleStr.lastIndexOf('left: ') + 'left: '.length
+            const leftEndIdx = styleStr.lastIndexOf(';')
+            res.width = parseInt(styleStr.substring(widthStartIdx, widthEndIdx))
+            res.left = parseInt(styleStr.substring(leftStartIdx, leftEndIdx))
+            return res
+        })
+
+        const lastPart = sizeAndPositions.at(-1)
+        const totalWidth = lastPart.left + lastPart.width
+        const partsWidth = totalWidth - (sizeAndPositions.length - 1) * 2
+        sizeAndPositions.forEach((sizePos, idx, arr) => {
+            const correction = idx === arr.length - 1 ? 0 : 2
+            sizePos.percent = (sizePos.width + correction) / totalWidth
+        })
+        let accWidth = 0
+        const elsDataMaps = elMapChapters.map((el, idx) => {
+            const { percent, ...originalSizePos } = sizeAndPositions[idx]
+            const res = {
+                el,
+                path: el.querySelector('svg > path').getAttribute('d'),
+                originalSizePos,
+                percent,
+                width: sizeAndPositions[idx].percent * 1000,
+                startX: accWidth,
+            }
+            accWidth += res.width + 4
+            return res
+        })
+
+
+        return elsDataMaps
+
+
+    }
+
 
     function setHeatPercentages() {
         const pathData = getHeatMapPath()
@@ -616,3 +694,33 @@ function injectedFunction({
 
 }
 
+
+
+
+/**
+ * Checks if a value is of a specific type.
+ *
+ * @param {*} value - The value to check.
+ * @param {string} type - The type to check against.
+ * @returns {boolean} - Returns true if the value is of the specified type, otherwise false.
+ */
+function isOfType(value, type) {
+    const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
+    let condition = true
+    if (type === 'number') {
+        condition = Number.isFinite(value)
+    }
+    return Object.prototype.toString.call(value) === `[object ${capitalize(type)}]` && condition
+}
+
+function isOfTypeFactory(type) {
+    return value => isOfType(value, type)
+}
+
+
+const isObject = isOfTypeFactory('object')
+const isArray = isOfTypeFactory('array')
+const isNumber = isOfTypeFactory('number')
+const isString = isOfTypeFactory('string')
+const isBoolean = isOfTypeFactory('boolean')
+const isPrimitive = (val) => isBoolean(val) || isNumber(val) || isString(val)
