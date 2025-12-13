@@ -476,9 +476,9 @@ function injectedFunction({
     function getHeatMapPath() {
         const elSvg = document.querySelector(SVG_SELECTOR)
         if (!elSvg) return appLog('Cannot find svg', { svgSelector: SVG_SELECTOR })
-        appLog({ elSvg })
+        // appLog({ elSvg })
         const path = elSvg.querySelector('svg > path').getAttribute('d')
-        appLog({ path })
+        // appLog({ path })
         return path
     }
 
