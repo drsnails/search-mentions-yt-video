@@ -182,7 +182,15 @@ function onSvgHeatmapMouseMove(ev) {
     }
 }
 function getCurrentTime(ev) {
-    executeCurrentContentScript({ funcName: 'sendTimeData', percent: ev.x / window.innerWidth * 100 })
+    gPendingTimePercent = ev.x / window.innerWidth * 100
+    if (gTimeRafId !== null) return
+
+    gTimeRafId = requestAnimationFrame(() => {
+        gTimeRafId = null
+        if (gPendingTimePercent === null) return
+        executeCurrentContentScript({ funcName: 'sendTimeData', percent: gPendingTimePercent })
+        gPendingTimePercent = null
+    })
 }
 
 function renderShadowLineTime(percent, videoDuration) {
@@ -198,9 +206,28 @@ function renderShadowLineTime(percent, videoDuration) {
     gElCursorShadow.dataset.time = formattedTime
 }
 
+let gMouseEvX = 0
+let lastDrawnX = null
+let gShadowRafId = null
+let gTimeRafId = null
+let gPendingTimePercent = null
+
 function moveShadowTimeLine(ev) {
-    return gElCursorShadow.style.left = `${ev.x - 0.5}px`
+    gMouseEvX = ev.clientX
+    if (gShadowRafId !== null) return
+    gShadowRafId = requestAnimationFrame(flushShadowCursor)
 }
+
+function flushShadowCursor() {
+    gShadowRafId = null
+    const x = gMouseEvX - 0.5
+
+    if (x !== lastDrawnX) {
+        gElCursorShadow.style.left = `${x}px`
+        lastDrawnX = x
+    }
+}
+
 
 function onSvgHeatmapMouseDown(ev) {
     gIsMouseDown = true
@@ -234,6 +261,9 @@ function onSvgHeatmapMouseLeave() {
     gIsSvgMouseOver = false
     gIsMouseDown = false
     gElCursorShadow && (gElCursorShadow.style.display = 'none')
+    cancelAnimationFrame(gShadowRafId)
+    gShadowRafId = null
+
 }
 
 const { onBgcMouseMove, onBtnMouseEnterLeave, onBtnMouseMove } = (() => {
