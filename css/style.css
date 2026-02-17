@@ -204,7 +204,8 @@ form {
             --btnPadding: 0.5rem;
             --btnBgColor: var(--clr-neutral-500, '#111');
             --backgroundSize: 8px;
-            --effectTransTime: .16s;
+            --effectTransTime: .2s;
+            --effectTransTimeFunction: cubic-bezier(0.13, 0.44, 0.18, 0.95);
 
 
             .background {
@@ -240,7 +241,7 @@ form {
                     background-color: white;
                     transform-origin: var(--tOrigin);
                     transform: scaleX(0);
-                    transition: transform var(--effectTransTime) ease-in;
+                    transition: transform var(--effectTransTime) var(--effectTransTimeFunction);
                 }
 
 

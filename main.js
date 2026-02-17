@@ -476,8 +476,11 @@ function injectedFunction({
 
     function getHeatMapPath() {
         let rectsSizeData = getAllSvgSizeDatas()
+        appLog({ rectsSizeData })
         if (!rectsSizeData.length) return appLog('Cannot find chapters', { CHAPTER_SELECTOR })
         if (rectsSizeData.length === 1) {
+            // const elPath = document.querySelector(SVG_SELECTOR + ' > path')
+            // return elPath.getAttribute('d')
             return rectsSizeData[0].path
         }
         const mergedPaths = mergeScaledPaths(rectsSizeData)
@@ -488,7 +491,8 @@ function injectedFunction({
     function mergeScaledPaths(pathsData, gap = 4) {
         let mergedPathParts = [];
         const totalWidthGaps = pathsData.at(-1).originalSizePos.width + pathsData.at(-1).originalSizePos.left
-        
+
+        const totalWidthNoGaps = totalWidthGaps - (pathsData.length - 1) * 4
         pathsData.forEach(pathData => {
             const { path, width, startX, originalSizePos } = pathData
             const percent = originalSizePos.width / totalWidthGaps
@@ -499,7 +503,7 @@ function injectedFunction({
             const transformedPath = path.replace(/-?\d+(\.\d+)?/g, (match) => {
                 const originalValue = parseFloat(match);
                 const isXCoordinate = numberCount % 2 === 0;
-     
+
                 numberCount++;
 
                 if (isXCoordinate) {
@@ -533,10 +537,9 @@ function injectedFunction({
 
         const lastPart = sizeAndPositions.at(-1)
         const totalWidth = lastPart.left + lastPart.width
-        const partsWidth = totalWidth - (sizeAndPositions.length - 1) * 2
+        appLog({totalWidth})
         sizeAndPositions.forEach((sizePos, idx, arr) => {
-            const correction = idx === arr.length - 1 ? 0 : 2
-            sizePos.percent = (sizePos.width + correction) / totalWidth
+            sizePos.percent = sizePos.width / totalWidth
         })
         let accWidth = 0
         const elsDataMaps = elMapChapters.map((el, idx) => {
@@ -549,7 +552,10 @@ function injectedFunction({
                 width: sizeAndPositions[idx].percent * 1000,
                 startX: accWidth,
             }
-            accWidth += res.width + 4
+            const gap = sizeAndPositions[idx + 1]
+                ? sizeAndPositions[idx + 1].left - (res.originalSizePos.left + res.originalSizePos.width)
+                : 0
+            accWidth += res.width + gap
             return res
         })
 
